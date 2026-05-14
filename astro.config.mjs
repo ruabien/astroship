@@ -5,21 +5,16 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  // Chế độ đầu ra cho Cloudflare
+  // Chế độ chạy trên Cloudflare
   output: 'server', 
   
   adapter: cloudflare({
-    // Tắt tính năng session nếu bạn chưa cấu hình KV trên Cloudflare
-    // Hoặc giữ nguyên nếu bạn muốn dùng, nhưng phải có cờ experimental bên dưới
+    // Bật session theo cách chính thức
     session: true, 
   }),
 
-  // SỬA LỖI CHÍNH: Kích hoạt cờ thử nghiệm cho Session
-  experimental: {
-    session: true,
-  },
-
-  // Tối ưu hình ảnh lúc Build (để tránh lỗi Sharp trên Cloudflare Runtime)
+  // CHỖ CẦN SỬA: Xóa bỏ mục experimental cũ vì Astro 5 đã hỗ trợ chính thức
+  // Chúng ta chỉ giữ lại phần tối ưu hình ảnh
   image: {
     service: {
       entrypoint: 'astro/assets/services/sharp',
