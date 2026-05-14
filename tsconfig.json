@@ -1,12 +1,10 @@
 {
-  "extends": "astro/tsconfigs/base",
+  "extends": "astro/tsconfigs/strict",
+  "include": [
+    "src",
+    "worker-configuration.d.ts"
+  ],
   "compilerOptions": {
-    "baseUrl": ".",
-    "strictNullChecks": true,
-    "types": ["astro/client"],
-    "paths": {
-      "@/*": ["src/*"],
-      "~/*": ["./*"]
-    }
+    "types": ["@astrojs/cloudflare"]
   }
 }
