@@ -9,11 +9,11 @@ export default defineConfig({
   output: 'server', 
   
   adapter: cloudflare({
-    // Bật tính năng session (đã là chính thức, không cần cờ experimental)
+    // Bật session chính thức (không nằm trong mục experimental)
     session: true, 
   }),
 
-  // Tối ưu hình ảnh lúc build (giữ lại để web tải nhanh hơn)
+  // Cấu hình hình ảnh tiêu chuẩn cho Astro 5
   image: {
     service: {
       entrypoint: 'astro/assets/services/sharp',
