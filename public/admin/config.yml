@@ -1,0 +1,16 @@
+backend:
+  name: github
+  repo: ruabien/astroship # Tên repo của bạn
+  branch: main
+media_folder: "public/images"
+public_folder: "/images"
+collections:
+  - name: "ebooks"
+    label: "Ebooks"
+    folder: "src/content/ebooks"
+    create: true
+    fields:
+      - {label: "Tiêu đề", name: "title", widget: "string"}
+      - {label: "Giá (VNĐ)", name: "price", widget: "number"}
+      - {label: "Mô tả", name: "description", widget: "text"}
+      - {label: "Ảnh bìa", name: "image", widget: "image"}
