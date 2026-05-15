@@ -1,9 +1,13 @@
 backend:
   name: github
-  repo: ruabien/astroship # Tên repo của bạn
+  repo: ruabien/astroship 
   branch: main
+  site_domain: https://astroship-cuv.pages.dev # Thay bằng link thật
+
+display_url: https://astroship-cuv.pages.dev
 media_folder: "public/images"
 public_folder: "/images"
+
 collections:
   - name: "ebooks"
     label: "Ebooks"
