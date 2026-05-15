@@ -8,9 +8,9 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     resolve: {
-      alias: {
-        '@': '/src',
-      },
+      alias: [
+        { find: '@', replacement: '/src' }
+      ],
     },
   },
 });
