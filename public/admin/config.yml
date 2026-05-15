@@ -2,7 +2,7 @@ backend:
   name: github
   repo: ruabien/astroship 
   branch: main
-  site_domain: https://astroship-cuv.pages.dev # Thay bằng link thật
+  site_domain: astroship-cuv.pages.dev # Thay bằng link thật
 
 display_url: https://astroship-cuv.pages.dev
 media_folder: "public/images"
