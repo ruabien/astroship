@@ -1,8 +1,8 @@
 backend:
   name: github
-  repo: ruabien/astroship # Tên repository website của bạn
+  repo: ruabien/astroship
   branch: main
-  base_url: https://decap-auth-ruabien.ruabien1504.workers.dev # <--- DÁN LINK WORKER VỪA THÀNH CÔNG VÀO ĐÂY
+  base_url: https://decap-auth-ruabien.ruabien1504.workers.dev
   auth_endpoint: auth
 
 display_url: https://astroship-cuv.pages.dev
@@ -10,12 +10,29 @@ media_folder: "public/images"
 public_folder: "/images"
 
 collections:
+  # --- TẬP HỢP 1: QUẢN LÝ EBOOKS ---
   - name: "ebooks"
     label: "Ebooks"
     folder: "src/content/ebooks"
     create: true
+    slug: "{{slug}}"
     fields:
       - {label: "Tiêu đề", name: "title", widget: "string"}
       - {label: "Giá (VNĐ)", name: "price", widget: "number"}
-      - {label: "Mô tả", name: "description", widget: "text"}
+      - {label: "Mô tả ngắn", name: "description", widget: "text"}
       - {label: "Ảnh bìa", name: "image", widget: "image"}
+      - {label: "Nội dung chi tiết", name: "body", widget: "markdown"}
+
+  # --- TẬP HỢP 2: QUẢN LÝ BLOG (MỚI THÊM) ---
+  - name: "blog"
+    label: "Bài viết Blog"
+    folder: "src/content/blog" # Đường dẫn lưu bài viết trong code Astro
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - {label: "Tiêu đề bài viết", name: "title", widget: "string"}
+      - {label: "Ngày đăng", name: "publishDate", widget: "datetime"}
+      - {label: "Tác giả", name: "author", widget: "string", default: "Admin"}
+      - {label: "Hình ảnh đại diện", name: "image", widget: "image"}
+      - {label: "Mô tả ngắn", name: "snippet", widget: "text"}
+      - {label: "Nội dung bài viết", name: "body", widget: "markdown"}
