@@ -23,7 +23,7 @@ export const POST: APIRoute = async (context) => {
   try {
     const data = await context.request.json();
     
-    // Đọc biến từ Cloudflare (Quét mọi ngóc ngách để tránh lỗi nhận diện Secrets)
+    // Nạp mã bí mật bảo mật
     // @ts-ignore
     const envs = context.locals.runtime?.env || globalThis || process?.env || {};
     const clientId = envs.PAYOS_CLIENT_ID || "";
@@ -31,14 +31,15 @@ export const POST: APIRoute = async (context) => {
     const checksumKey = envs.PAYOS_CHECKSUM_KEY || "";
 
     const rawDescription = `Mua ${data.title}`;
-    const cleanDescription = removeVietnameseTones(rawDescription).substring(0, 20);
-    const orderCode = Number(String(Date.now()).slice(-6));
+    const cleanDescription = removeVietnameseTones(rawDescription).substring(0, 20).trim();
+    
+    // Ép mã đơn hàng ngẫu nhiên thành chuỗi số nguyên lớn từ 100000 đến 999999 để không bao giờ mất số 0 đầu
+    const orderCode = Math.floor(100000 + Math.random() * 899999);
 
     const paymentData = {
       orderCode: orderCode,
       amount: Number(data.price),
       description: cleanDescription,
-      // ĐỒNG BỘ ĐƯỜNG DẪN THEO TÊN MIỀN CHÍNH THỨC CỦA BẠN
       cancelUrl: 'https://hotro.online/payment-cancel',
       returnUrl: 'https://hotro.online/payment-success',
     };
@@ -56,8 +57,8 @@ export const POST: APIRoute = async (context) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-client-id': clientId,
-        'x-api-key': apiKey,
+        'x-client-id': clientId.trim(),
+        'x-api-key': apiKey.trim(),
       },
       body: JSON.stringify(bodyToSend),
     });
@@ -70,6 +71,7 @@ export const POST: APIRoute = async (context) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+    // Trả về lý do chi tiết từ PayOS thay vì chữ chung chung
     return new Response(JSON.stringify({ error: result.message || 'PayOS tu choi' }), { status: 400 });
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
