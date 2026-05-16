@@ -18,7 +18,8 @@ try {
       slug: slug,
       title: file.frontmatter.title || "Ebook không tên",
       price: file.frontmatter.price || 0,
-      oldPrice: file.frontmatter.oldPrice || 0, // Bốc tách giá gốc gạch ngang
+      oldPrice: file.frontmatter.oldPrice || 0,
+      category: file.frontmatter.category || "HoTroOnline", // Bốc tách danh mục
       image: file.frontmatter.image || "",
     });
   }
@@ -39,15 +40,14 @@ try {
         <p class="text-gray-500 text-lg">Hiện chưa có sản phẩm nào được đăng tải. Vui lòng quay lại sau!</p>
       </div>
     ) : (
-      /* Bộ khung lưới Grid 3 cột sát nhau, bo góc viền xanh lá/xanh dương nhẹ nhàng như mẫu */
+      /* Bộ khung lưới Grid 3 cột sang trọng */
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 my-12">
         {products.map((product) => (
-          /* Biến toàn bộ chiếc thẻ sản phẩm thành một liên kết <a> khổng lồ, click đâu cũng trúng */
           <a 
             href={`/shop/${product.slug}`}
-            class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-xl hover:border-emerald-500 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
+            class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-xl hover:border-blue-500 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
           >
-            {/* 1. Phần HÌNH ẢNH Ở PHÍA TRÊN chiếm tỷ lệ chữ nhật ngang chuẩn banner khóa học */}
+            {/* 1. Phần HÌNH ẢNH Ở PHÍA TRÊN */}
             <div class="aspect-[4/3] bg-gray-50 overflow-hidden relative border-b border-gray-100">
               {product.image ? (
                 <img 
@@ -62,24 +62,34 @@ try {
               )}
             </div>
 
-            {/* 2. Phần TIÊU ĐỀ SẢN PHẨM ĐẦY ĐỦ Ở PHÍA DƯỚI */}
+            {/* Khối nội dung phía dưới */}
             <div class="p-5 flex flex-col justify-between flex-1 bg-white">
-              <div class="mb-6">
-                {/* Bỏ giới hạn line-clamp để hiển thị trọn vẹn tiêu đề dài không bị che khuất */}
-                <h2 class="text-lg font-semibold text-gray-800 group-hover:text-emerald-600 transition-colors leading-snug">
+              <div>
+                {/* 2. TIÊU ĐỀ SẢN PHẨM ĐẦY ĐỦ */}
+                <h2 class="text-[17px] font-semibold text-gray-800 group-hover:text-blue-600 transition-colors leading-snug mb-3">
                   {product.title}
                 </h2>
+                
+                {/* 3. PHẦN CATEGORY (Hiển thị icon nhỏ kèm chữ như ảnh mẫu) */}
+                <div class="flex items-center gap-2 mb-4">
+                  <div class="w-5 h-5 rounded-md bg-blue-50 flex items-center justify-center text-[10px] text-blue-600 font-bold border border-blue-100">
+                    📚
+                  </div>
+                  <span class="text-xs font-medium text-gray-500">
+                    {product.category}
+                  </span>
+                </div>
               </div>
 
-              {/* 3. Phần GIÁ CẢ SONG SONG GIỐNG HỆT ẢNH MẪU (Bỏ hoàn toàn chữ Xem Thêm) */}
-              <div class="flex items-baseline justify-center gap-3 border-t pt-4 border-gray-50">
+              {/* 4. PHẦN GIÁ CẢ CĂN TRÁI THEO ĐÚNG MẪU MỚI */}
+              <div class="flex items-baseline gap-2 border-t pt-4 border-gray-50 justify-start">
                 {product.oldPrice > 0 && (
                   <span class="text-sm text-gray-400 line-through font-normal">
-                    {product.oldPrice.toLocaleString('vi-VN')}đ
+                    {product.oldPrice.toLocaleString('vi-VN')} đ
                   </span>
                 )}
-                <span class="text-xl font-bold text-red-500">
-                  {product.price.toLocaleString('vi-VN')}đ
+                <span class="text-base font-bold text-red-500">
+                  {product.price.toLocaleString('vi-VN')} đ
                 </span>
               </div>
             </div>
