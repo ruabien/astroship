@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro';
-import crypto from 'node:crypto'; // Sử dụng module mã hóa chính thức của hệ thống
+import crypto from 'node:crypto';
 
-// Hàm lọc dấu tiếng Việt chuẩn quy định PayOS
 function removeVietnameseTones(str: string) {
   str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
   str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
@@ -24,7 +23,7 @@ export const POST: APIRoute = async (context) => {
   try {
     const data = await context.request.json();
     
-    // Nạp biến môi trường trực tiếp từ Cloudflare Pages Runtime
+    // Nạp biến môi trường từ Cloudflare Pages Runtime
     // @ts-ignore
     const envs = context.locals.runtime?.env || {};
     const clientId = envs.PAYOS_CLIENT_ID || "";
@@ -33,7 +32,9 @@ export const POST: APIRoute = async (context) => {
 
     const rawDescription = `Mua ${data.title}`;
     const cleanDescription = removeVietnameseTones(rawDescription).substring(0, 20);
-    const orderCode = Math.floor(100000 + Math.random() * 900000);
+    
+    // GIẢI PHÁP ĐẶC TRỊ: Sử dụng thời gian thực cắt lấy 6 số cuối để làm mã đơn hàng duy nhất, không trùng lặp
+    const orderCode = Number(String(Date.now()).slice(-6));
 
     const paymentData = {
       orderCode: orderCode,
@@ -43,10 +44,8 @@ export const POST: APIRoute = async (context) => {
       returnUrl: 'https://astroship-cuv.pages.dev/payment-success',
     };
 
-    // Tạo chuỗi ký số theo quy định chuẩn của PayOS
     const sortedDataStr = `amount=${paymentData.amount}&cancelUrl=${paymentData.cancelUrl}&description=${paymentData.description}&orderCode=${paymentData.orderCode}&returnUrl=${paymentData.returnUrl}`;
     
-    // Tạo chữ ký SHA256 chính thống thông qua node:crypto cực kỳ an toàn
     const signature = crypto
       .createHmac('sha256', checksumKey)
       .update(sortedDataStr)
