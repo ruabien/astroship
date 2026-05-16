@@ -22,12 +22,13 @@ export const POST: APIRoute = async (context) => {
   try {
     const data = await context.request.json();
     
-    // Đọc biến từ môi trường bất kể Production hay Preview
+    // GIẢI PHÁP ĐẶC TRỊ: Quét mọi ngóc ngách để lấy bằng được biến môi trường trên Cloudflare
     // @ts-ignore
-    const envs = context.locals.runtime?.env || globalThis || {};
+    const envs = context.locals.runtime?.env || process.env || globalThis || {};
     
-    const clientId = envs.PAYOS_CLIENT_ID || "";
-    const apiKey = envs.PAYOS_API_KEY || "";
+    // Thử lấy từ môi trường Cloudflare Pages, nếu trống thì lấy trực tiếp từ hệ thống toàn cục
+    const clientId = envs.PAYOS_CLIENT_ID || (typeof process !== 'undefined' ? process.env.PAYOS_CLIENT_ID : "") || "";
+    const apiKey = envs.PAYOS_API_KEY || (typeof process !== 'undefined' ? process.env.PAYOS_API_KEY : "") || "";
 
     const rawDescription = `Mua ${data.title}`;
     const cleanDescription = removeVietnameseTones(rawDescription).substring(0, 20);
@@ -58,8 +59,10 @@ export const POST: APIRoute = async (context) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    return new Response(JSON.stringify({ error: result.message || 'PayOS error' }), { status: 400 });
+    
+    // Nếu PayOS trả về lỗi cụ thể, xuất thẳng lỗi đó ra màn hình alert để biết chính xác lý do
+    return new Response(JSON.stringify({ error: result.message || 'PayOS tu choi' }), { status: 400 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Loi ket noi server Cloudflare' }), { status: 500 });
   }
 };
