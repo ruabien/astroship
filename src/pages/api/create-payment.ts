@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
 
-// Hàm tự động loại bỏ dấu tiếng Việt và ký tự đặc biệt để PayOS chấp nhận
+// Hàm tự động loại bỏ dấu tiếng Việt để PayOS chấp nhận đơn hàng
 function removeVietnameseTones(str: string) {
   str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
-  str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ẽ/g, "e");
+  str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
   str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
-  str = str.replace(/ò|á|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+  str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
   str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
   str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
   str = str.replace(/đ/g, "d");
@@ -16,33 +16,43 @@ function removeVietnameseTones(str: string) {
   str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
   str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
   str = str.replace(/Đ/g, "D");
-  // Loại bỏ các ký tự đặc biệt, chỉ giữ lại chữ và số
   return str.replace(/[^a-zA-Z0-9 ]/g, "");
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
   try {
-    const data = await request.json();
+    const data = await context.request.json();
     
-    // Tạo nội dung mô tả KHÔNG DẤU và không quá 20 ký tự theo luật PayOS
+    // ĐÂY LÀ CHÌA KHÓA: Lấy biến môi trường trực tiếp từ Cloudflare Runtime
+    // @ts-ignore
+    const cloudflareEnv = context.locals.runtime?.env || {};
+    
+    const clientId = cloudflareEnv.PAYOS_CLIENT_ID;
+    const apiKey = cloudflareEnv.PAYOS_API_KEY;
+
+    // Kiểm tra nhanh xem Cloudflare đã nạp được biến chưa
+    if (!clientId || !apiKey) {
+      return new Response(JSON.stringify({ error: 'Cloudflare chưa cấu hình Environment Variables' }), { status: 500 });
+    }
+
     const rawDescription = `Mua ${data.title}`;
     const cleanDescription = removeVietnameseTones(rawDescription).substring(0, 20);
 
     const paymentData = {
-      orderCode: Math.floor(100000 + Math.random() * 900000), // Mã đơn hàng 6 số
+      orderCode: Math.floor(100000 + Math.random() * 900000), // Mã đơn hàng ngẫu nhiên 6 số
       amount: Number(data.price),
-      description: cleanDescription, 
+      description: cleanDescription,
       cancelUrl: 'https://astroship-cuv.pages.dev/payment-cancel',
       returnUrl: 'https://astroship-cuv.pages.dev/payment-success',
     };
 
-    // Gọi API PayOS với biến môi trường của Cloudflare
+    // Gọi API của PayOS
     const response = await fetch('https://api-merchant.payos.vn/v2/payment-requests', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-client-id': process.env.PAYOS_CLIENT_ID || '',
-        'x-api-key': process.env.PAYOS_API_KEY || '',
+        'x-client-id': clientId,
+        'x-api-key': apiKey,
       },
       body: JSON.stringify(paymentData),
     });
@@ -55,10 +65,9 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     } else {
-      // Trả về lỗi chi tiết từ hệ thống PayOS để dễ debug
       return new Response(JSON.stringify({ error: result.message || 'PayOS tu choi don hang' }), { status: 400 });
     }
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Loi ket noi Server Astro' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Loi ket noi máy chu Cloudflare' }), { status: 500 });
   }
 };
