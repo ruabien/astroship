@@ -30,7 +30,7 @@ export const POST: APIRoute = async (context) => {
     const apiKey = envs.PAYOS_API_KEY || "";
     const checksumKey = envs.PAYOS_CHECKSUM_KEY || "";
 
-    // GIẢI PHÁP ĐẶC TRỊ: Lấy trực tiếp nội dung mô tả sạch từ client gửi lên (nếu có), hoặc chuẩn hóa tiêu đề sạch
+    // Đồng bộ chuỗi mô tả sạch
     let description = data.description || `Mua ${data.title}`;
     description = removeVietnameseTones(description).substring(0, 20).trim();
     
@@ -40,7 +40,7 @@ export const POST: APIRoute = async (context) => {
     const paymentData = {
       orderCode: orderCode,
       amount: Number(data.price),
-      description: description, // Sử dụng chuỗi mô tả đã đồng bộ
+      description: description,
       cancelUrl: 'https://hotro.online/payment-cancel',
       returnUrl: 'https://hotro.online/payment-success',
     };
@@ -67,14 +67,16 @@ export const POST: APIRoute = async (context) => {
 
     const result = await response.json();
     
-    // Trả ra toàn bộ dữ liệu sạch để Frontend bốc tách
-    if (result.error === 0 && result.data?.checkoutUrl) {
-      return new Response(JSON.stringify({ checkoutUrl: result.data.checkoutUrl, data: result.data }), {
+    // SỬA ĐỔI QUYẾT ĐỊNH: Chấp nhận cả mã lỗi bằng số 0 hoặc chuỗi "00" chuẩn Live PayOS
+    if ((result.error === 0 || result.code === "00") && (result.data?.checkoutUrl || result.checkoutUrl)) {
+      const url = result.data?.checkoutUrl || result.checkoutUrl;
+      return new Response(JSON.stringify({ checkoutUrl: url }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    return new Response(JSON.stringify({ error: result.message || 'PayOS tu choi', rawPayOS: result }), { status: 400 });
+    
+    return new Response(JSON.stringify({ error: result.desc || 'PayOS tu choi' }), { status: 400 });
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
   }
