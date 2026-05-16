@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 
+// Hàm lọc dấu tiếng Việt chuẩn quy định PayOS
 function removeVietnameseTones(str: string) {
   str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
   str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
@@ -18,28 +19,46 @@ function removeVietnameseTones(str: string) {
   return str.replace(/[^a-zA-Z0-9 ]/g, "");
 }
 
+// Thuật toán tạo chữ ký Webhook SHA256 bắt buộc của cổng PayOS v2
+async function generateSignature(data: any, checksumKey: string) {
+  const sortedData = `amount=${data.amount}&cancelUrl=${data.cancelUrl}&description=${data.description}&orderCode=${data.orderCode}&returnUrl=${data.returnUrl}`;
+  const encoder = new TextEncoder();
+  const keyBuf = encoder.encode(checksumKey);
+  const dataBuf = encoder.encode(sortedData);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", keyBuf, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const signatureBuf = await crypto.subtle.sign("HMAC", cryptoKey, dataBuf);
+  return Array.from(new Uint8Array(signatureBuf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 export const POST: APIRoute = async (context) => {
   try {
     const data = await context.request.json();
     
-    // GIẢI PHÁP ĐẶC TRỊ: Quét mọi ngóc ngách để lấy bằng được biến môi trường trên Cloudflare
+    // Nạp biến môi trường từ Cloudflare Pages
     // @ts-ignore
     const envs = context.locals.runtime?.env || process.env || globalThis || {};
-    
-    // Thử lấy từ môi trường Cloudflare Pages, nếu trống thì lấy trực tiếp từ hệ thống toàn cục
-    const clientId = envs.PAYOS_CLIENT_ID || (typeof process !== 'undefined' ? process.env.PAYOS_CLIENT_ID : "") || "";
-    const apiKey = envs.PAYOS_API_KEY || (typeof process !== 'undefined' ? process.env.PAYOS_API_KEY : "") || "";
+    const clientId = envs.PAYOS_CLIENT_ID || "";
+    const apiKey = envs.PAYOS_API_KEY || "";
+    const checksumKey = envs.PAYOS_CHECKSUM_KEY || "";
 
     const rawDescription = `Mua ${data.title}`;
     const cleanDescription = removeVietnameseTones(rawDescription).substring(0, 20);
+    const orderCode = Math.floor(100000 + Math.random() * 900000);
 
     const paymentData = {
-      orderCode: Math.floor(100000 + Math.random() * 900000),
+      orderCode: orderCode,
       amount: Number(data.price),
       description: cleanDescription,
       cancelUrl: 'https://astroship-cuv.pages.dev/payment-cancel',
       returnUrl: 'https://astroship-cuv.pages.dev/payment-success',
+      signature: ""
     };
+
+    // Ký số đơn hàng bằng Checksum Key trước khi gửi đi
+    paymentData.signature = await generateSignature(paymentData, checksumKey);
 
     const response = await fetch('https://api-merchant.payos.vn/v2/payment-requests', {
       method: 'POST',
@@ -59,10 +78,8 @@ export const POST: APIRoute = async (context) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
-    // Nếu PayOS trả về lỗi cụ thể, xuất thẳng lỗi đó ra màn hình alert để biết chính xác lý do
     return new Response(JSON.stringify({ error: result.message || 'PayOS tu choi' }), { status: 400 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Loi ket noi server Cloudflare' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
   }
 };
