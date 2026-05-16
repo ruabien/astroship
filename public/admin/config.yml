@@ -1,8 +1,9 @@
 backend:
   name: github
-  repo: ruabien/astroship 
+  repo: ruabien/astroship # Tên repository website của bạn
   branch: main
-  site_domain: astroship-cuv.pages.dev # Thay bằng link thật
+  base_url: https://decap-auth-ruabien.ruabien1504.workers.dev # <--- DÁN LINK WORKER VỪA THÀNH CÔNG VÀO ĐÂY
+  auth_endpoint: auth
 
 display_url: https://astroship-cuv.pages.dev
 media_folder: "public/images"
