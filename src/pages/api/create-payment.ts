@@ -23,31 +23,33 @@ export const POST: APIRoute = async (context) => {
   try {
     const data = await context.request.json();
     
-    // Nạp mã bí mật bảo mật
+    // Nạp mã bí mật bảo mật từ Cloudflare
     // @ts-ignore
     const envs = context.locals.runtime?.env || globalThis || process?.env || {};
     const clientId = envs.PAYOS_CLIENT_ID || "";
     const apiKey = envs.PAYOS_API_KEY || "";
     const checksumKey = envs.PAYOS_CHECKSUM_KEY || "";
 
-    const rawDescription = `Mua ${data.title}`;
-    const cleanDescription = removeVietnameseTones(rawDescription).substring(0, 20).trim();
+    // GIẢI PHÁP ĐẶC TRỊ: Lấy trực tiếp nội dung mô tả sạch từ client gửi lên (nếu có), hoặc chuẩn hóa tiêu đề sạch
+    let description = data.description || `Mua ${data.title}`;
+    description = removeVietnameseTones(description).substring(0, 20).trim();
     
-    // Ép mã đơn hàng ngẫu nhiên thành chuỗi số nguyên lớn từ 100000 đến 999999 để không bao giờ mất số 0 đầu
+    // Tạo mã đơn hàng ngẫu nhiên cố định độ dài
     const orderCode = Math.floor(100000 + Math.random() * 899999);
 
     const paymentData = {
       orderCode: orderCode,
       amount: Number(data.price),
-      description: cleanDescription,
+      description: description, // Sử dụng chuỗi mô tả đã đồng bộ
       cancelUrl: 'https://hotro.online/payment-cancel',
       returnUrl: 'https://hotro.online/payment-success',
     };
 
+    // Tạo chuỗi ký số
     const sortedDataStr = `amount=${paymentData.amount}&cancelUrl=${paymentData.cancelUrl}&description=${paymentData.description}&orderCode=${paymentData.orderCode}&returnUrl=${paymentData.returnUrl}`;
     
     const signature = crypto
-      .createHmac('sha256', checksumKey)
+      .createHmac('sha256', checksumKey.trim())
       .update(sortedDataStr)
       .digest('hex');
 
@@ -65,14 +67,14 @@ export const POST: APIRoute = async (context) => {
 
     const result = await response.json();
     
+    // Trả ra toàn bộ dữ liệu sạch để Frontend bốc tách
     if (result.error === 0 && result.data?.checkoutUrl) {
-      return new Response(JSON.stringify({ checkoutUrl: result.data.checkoutUrl }), {
+      return new Response(JSON.stringify({ checkoutUrl: result.data.checkoutUrl, data: result.data }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    // Trả về lý do chi tiết từ PayOS thay vì chữ chung chung
-    return new Response(JSON.stringify({ error: result.message || 'PayOS tu choi' }), { status: 400 });
+    return new Response(JSON.stringify({ error: result.message || 'PayOS tu choi', rawPayOS: result }), { status: 400 });
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
   }
