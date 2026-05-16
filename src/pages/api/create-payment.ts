@@ -40,8 +40,8 @@ export const POST: APIRoute = async (context) => {
       orderCode: orderCode,
       amount: Number(data.price),
       description: cleanDescription,
-      cancelUrl: 'https://astroship-cuv.pages.dev/payment-cancel',
-      returnUrl: 'https://astroship-cuv.pages.dev/payment-success',
+      cancelUrl: 'https://hotro.online/payment-cancel',
+      returnUrl: 'https://hotro.online/payment-success',
     };
 
     const sortedDataStr = `amount=${paymentData.amount}&cancelUrl=${paymentData.cancelUrl}&description=${paymentData.description}&orderCode=${paymentData.orderCode}&returnUrl=${paymentData.returnUrl}`;
