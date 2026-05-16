@@ -1,26 +1,49 @@
 ---
-import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Container from '../../components/container.astro';
 
-// 1. Lấy tất cả các file Ebook từ thư mục content
-export async function getStaticPaths() {
-  const ebooks = await getCollection('ebooks');
-  return ebooks.map(ebook => ({
-    params: { slug: ebook.id },
-    props: { ebook },
-  }));
+// Tắt prerender để chạy chế độ động trên Cloudflare Server
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+let title = "";
+let price = 0;
+let description = "";
+let image = "";
+let hasError = false;
+
+try {
+  // Sử dụng Vite để quét và đọc trực tiếp file markdown trong thư mục content
+  const posts = import.meta.glob('/src/content/ebooks/*.md', { eager: true });
+  
+  // Tìm file có tên khớp với slug người dùng đang truy cập
+  const matchPath = `/src/content/ebooks/${slug}.md`;
+  const matchedFile = posts[matchPath] as any;
+
+  if (matchedFile) {
+    title = matchedFile.frontmatter.title || "Ebook";
+    price = matchedFile.frontmatter.price || 0;
+    description = matchedFile.frontmatter.description || "";
+    image = matchedFile.frontmatter.image || "";
+  } else {
+    hasError = true;
+  }
+} catch (e) {
+  hasError = true;
 }
 
-const { ebook } = Astro.props;
-const { title, price, description, image } = ebook.data;
+// Nếu không tìm thấy sản phẩm, chuyển hướng văn minh về trang 404
+if (hasError) {
+  return Astro.redirect('/404');
+}
 ---
 
 <Layout title={title}>
   <Container>
     <div class="max-w-4xl mx-auto my-10 grid md:grid-cols-2 gap-8 items-center">
       <div>
-        <img src={image} alt={title} class="w-full rounded-lg shadow-xl border" />
+        {image && <img src={image} alt={title} class="w-full rounded-lg shadow-xl border" />}
       </div>
       
       <div>
@@ -42,7 +65,6 @@ const { title, price, description, image } = ebook.data;
 </Layout>
 
 <script>
-  // Script kích hoạt cổng thanh toán PayOS y hệt như trang Pricing
   const buyButton = document.getElementById('btn-payos-buy');
   buyButton?.addEventListener('click', async () => {
     buyButton.innerText = "Đang khởi tạo mã QR...";
