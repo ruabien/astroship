@@ -3,8 +3,3 @@ name = "astroship"
 compatibility_date = "2024-05-02"
 pages_build_output_dir = "dist"
 compatibility_flags = [ "nodejs_compat" ]
-
-[vars]
-PAYOS_CLIENT_ID = "6f965403-50f8-45f4-9cf4-61a08c4d939f"
-PAYOS_API_KEY = "b116ecbd-3ca0-46ee-b3c5-8af1e36c2aee"
-PAYOS_CHECKSUM_KEY = "28ad6db3fa094b6b16cfdb857b477d53504dbab6f53a76ff5a1a7ecbc219dc93"
