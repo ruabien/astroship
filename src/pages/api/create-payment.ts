@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
 
-// Hàm tự động loại bỏ dấu tiếng Việt để PayOS chấp nhận đơn hàng
 function removeVietnameseTones(str: string) {
   str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
   str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
@@ -23,30 +22,24 @@ export const POST: APIRoute = async (context) => {
   try {
     const data = await context.request.json();
     
-    // ĐÂY LÀ CHÌA KHÓA: Lấy biến môi trường trực tiếp từ Cloudflare Runtime
+    // Đọc biến từ môi trường bất kể Production hay Preview
     // @ts-ignore
-    const cloudflareEnv = context.locals.runtime?.env || {};
+    const envs = context.locals.runtime?.env || globalThis || {};
     
-    const clientId = cloudflareEnv.PAYOS_CLIENT_ID;
-    const apiKey = cloudflareEnv.PAYOS_API_KEY;
-
-    // Kiểm tra nhanh xem Cloudflare đã nạp được biến chưa
-    if (!clientId || !apiKey) {
-      return new Response(JSON.stringify({ error: 'Cloudflare chưa cấu hình Environment Variables' }), { status: 500 });
-    }
+    const clientId = envs.PAYOS_CLIENT_ID || "";
+    const apiKey = envs.PAYOS_API_KEY || "";
 
     const rawDescription = `Mua ${data.title}`;
     const cleanDescription = removeVietnameseTones(rawDescription).substring(0, 20);
 
     const paymentData = {
-      orderCode: Math.floor(100000 + Math.random() * 900000), // Mã đơn hàng ngẫu nhiên 6 số
+      orderCode: Math.floor(100000 + Math.random() * 900000),
       amount: Number(data.price),
       description: cleanDescription,
       cancelUrl: 'https://astroship-cuv.pages.dev/payment-cancel',
       returnUrl: 'https://astroship-cuv.pages.dev/payment-success',
     };
 
-    // Gọi API của PayOS
     const response = await fetch('https://api-merchant.payos.vn/v2/payment-requests', {
       method: 'POST',
       headers: {
@@ -64,10 +57,9 @@ export const POST: APIRoute = async (context) => {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
-    } else {
-      return new Response(JSON.stringify({ error: result.message || 'PayOS tu choi don hang' }), { status: 400 });
     }
+    return new Response(JSON.stringify({ error: result.message || 'PayOS error' }), { status: 400 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Loi ket noi máy chu Cloudflare' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
   }
 };
