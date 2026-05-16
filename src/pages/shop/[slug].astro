@@ -2,10 +2,21 @@
 import Layout from '../../layouts/Layout.astro';
 import Container from '../../components/container.astro';
 
-// Tắt prerender để chạy chế độ động trên Cloudflare Server
 export const prerender = false;
 
 const { slug } = Astro.params;
+
+// Hàm chuẩn hóa chuỗi để so sánh chính xác tuyệt đối
+function sanitizeSlug(text: string) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Xóa dấu tiếng Việt phát sinh nếu có
+    .replace(/[^a-z0-9-]/g, '')     // Chỉ giữ lại chữ, số và dấu gạch ngang
+    .trim();
+}
+
+const currentSlug = sanitizeSlug(slug || "");
 
 let title = "";
 let price = 0;
@@ -14,12 +25,18 @@ let image = "";
 let hasError = false;
 
 try {
-  // Sử dụng Vite để quét và đọc trực tiếp file markdown trong thư mục content
+  // Quét toàn bộ file trong thư mục ebooks
   const posts = import.meta.glob('/src/content/ebooks/*.md', { eager: true });
-  
-  // Tìm file có tên khớp với slug người dùng đang truy cập
-  const matchPath = `/src/content/ebooks/${slug}.md`;
-  const matchedFile = posts[matchPath] as any;
+  let matchedFile: any = null;
+
+  // Vòng lặp duyệt qua từng file để tìm kiếm linh hoạt, tránh lỗi lệch ký tự ẩn
+  for (const path in posts) {
+    const fileSlug = path.split('/').pop()?.replace('.md', '') || "";
+    if (sanitizeSlug(fileSlug) === currentSlug) {
+      matchedFile = posts[path];
+      break;
+    }
+  }
 
   if (matchedFile) {
     title = matchedFile.frontmatter.title || "Ebook";
@@ -33,7 +50,6 @@ try {
   hasError = true;
 }
 
-// Nếu không tìm thấy sản phẩm, chuyển hướng văn minh về trang 404
 if (hasError) {
   return Astro.redirect('/404');
 }
