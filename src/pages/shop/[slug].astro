@@ -1,0 +1,70 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Container from '../../components/container.astro';
+
+// 1. Lấy tất cả các file Ebook từ thư mục content
+export async function getStaticPaths() {
+  const ebooks = await getCollection('ebooks');
+  return ebooks.map(ebook => ({
+    params: { slug: ebook.id },
+    props: { ebook },
+  }));
+}
+
+const { ebook } = Astro.props;
+const { title, price, description, image } = ebook.data;
+---
+
+<Layout title={title}>
+  <Container>
+    <div class="max-w-4xl mx-auto my-10 grid md:grid-cols-2 gap-8 items-center">
+      <div>
+        <img src={image} alt={title} class="w-full rounded-lg shadow-xl border" />
+      </div>
+      
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
+        <p class="text-2xl font-extrabold text-blue-600 mb-4">{price.toLocaleString('vi-VN')} VNĐ</p>
+        <div class="text-gray-600 mb-6 border-b pb-6">{description}</div>
+        
+        <button 
+          id="btn-payos-buy" 
+          data-price={price} 
+          data-title={title}
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-200 cursor-pointer text-center"
+        >
+          Mua Ngay Với Mã QR
+        </button>
+      </div>
+    </div>
+  </Container>
+</Layout>
+
+<script>
+  // Script kích hoạt cổng thanh toán PayOS y hệt như trang Pricing
+  const buyButton = document.getElementById('btn-payos-buy');
+  buyButton?.addEventListener('click', async () => {
+    buyButton.innerText = "Đang khởi tạo mã QR...";
+    buyButton.setAttribute('disabled', 'true');
+    const price = buyButton.getAttribute('data-price');
+    const title = buyButton.getAttribute('data-title');
+
+    try {
+      const response = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price: Number(price), title })
+      });
+      const data = await response.json();
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        alert('Lỗi tạo link thanh toán!');
+        if(buyButton) { buyButton.innerText = "Mua Ngay Với Mã QR"; buyButton.removeAttribute('disabled'); }
+      }
+    } catch {
+      alert('Lỗi kết nối hệ thống!');
+    }
+  });
+</script>
