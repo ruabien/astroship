@@ -9,13 +9,20 @@ display_url: https://astroship-cuv.pages.dev
 media_folder: "public/images"
 public_folder: "/images"
 
+# --- BỘ LỌC TỰ ĐỘNG BỎ DẤU TIẾNG VIỆT TOÀN HỆ THỐNG ---
+slug:
+  encoding: "ascii"
+  clean_accents: true
+  sanitize_replacement: "-"
+
 collections:
+  # --- TẬP HỢP 1: QUẢN LÝ EBOOKS ---
   - name: "ebooks"
     label: "Ebooks"
     folder: "src/content/ebooks"
     create: true
-    slug: "{{slug}}"
-    preview_path: "shop/{{slug}}" # <--- THÊM DÒNG NÀY ĐỂ ĐỊNH HƯỚNG VÀO TRANG SHOP
+    slug: "{{title}}" # Đổi từ {{slug}} thành {{title}} để kích hoạt bộ lọc bỏ dấu
+    preview_path: "shop/{{slug}}"
     fields:
       - {label: "Tiêu đề", name: "title", widget: "string"}
       - {label: "Giá (VNĐ)", name: "price", widget: "number"}
@@ -23,10 +30,10 @@ collections:
       - {label: "Ảnh bìa", name: "image", widget: "image"}
       - {label: "Nội dung chi tiết", name: "body", widget: "markdown"}
 
-  # --- TẬP HỢP 2: QUẢN LÝ BLOG (MỚI THÊM) ---
+  # --- TẬP HỢP 2: QUẢN LÝ BLOG ---
   - name: "blog"
     label: "Bài viết Blog"
-    folder: "src/content/blog" # Đường dẫn lưu bài viết trong code Astro
+    folder: "src/content/blog"
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     fields:
