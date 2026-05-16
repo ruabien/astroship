@@ -1,6 +1,6 @@
 ---
 title: Sách Thử Nghiệm Tự Động
-price: 5000
+price: 20000
 description: Sách Thử Nghiệm Tự Động
 image: /images/bia-ebook-bi-mat-dotcom-3d.png
 ---
