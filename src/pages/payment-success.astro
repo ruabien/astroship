@@ -1,5 +1,23 @@
-<div style="text-align: center; padding: 100px 20px; font-family: sans-serif;">
-  <h1 style="color: #10b981; font-size: 3rem;">🎉 Thanh toán thành công!</h1>
-  <p style="color: #4b5563; font-size: 1.2rem; margin: 20px 0;">Hệ thống PayOS đã ghi nhận. Link tải Ebook đang được gửi tự động đến Email của bạn qua Sender.net!</p>
-  <a href="/" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; rounded: 5px;">Quay lại trang chủ</a>
-</div>
+---
+import Layout from '../layouts/Layout.astro';
+import Container from '../components/container.astro';
+---
+
+<Layout title="Thanh toán thành công">
+  <Container>
+    <div style="text-align: center; padding: 100px 20px; font-family: sans-serif; max-w-2xl; margin: 0 auto;">
+      <div style="font-size: 5rem; margin-bottom: 10px;">🎉</div>
+      <h1 style="color: #10b981; font-size: 2.5rem; font-weight: bold; margin-bottom: 15px;">
+        Thanh toán thành công!
+      </h1>
+      
+      <p style="color: #4b5563; font-size: 1.15rem; line-height: 1.6; margin-bottom: 30px;">
+        Hệ thống PayOS đã ghi nhận giao dịch của bạn. Link tải Ebook đang được hệ thống xử lý và gửi tự động đến Email của bạn. Vui lòng kiểm tra cả hộp thư đến và thư rác (Spam).
+      </p>
+      
+      <a href="/" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; transition: background 0.2s;">
+        Quay lại trang chủ
+      </a>
+    </div>
+  </Container>
+</Layout>
