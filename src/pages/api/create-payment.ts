@@ -23,23 +23,22 @@ export const POST: APIRoute = async (context) => {
   try {
     const data = await context.request.json();
     
-    // Nạp biến môi trường từ Cloudflare Pages Runtime
+    // Đọc biến từ Cloudflare (Quét mọi ngóc ngách để tránh lỗi nhận diện Secrets)
     // @ts-ignore
-    const envs = context.locals.runtime?.env || {};
+    const envs = context.locals.runtime?.env || globalThis || process?.env || {};
     const clientId = envs.PAYOS_CLIENT_ID || "";
     const apiKey = envs.PAYOS_API_KEY || "";
     const checksumKey = envs.PAYOS_CHECKSUM_KEY || "";
 
     const rawDescription = `Mua ${data.title}`;
     const cleanDescription = removeVietnameseTones(rawDescription).substring(0, 20);
-    
-    // GIẢI PHÁP ĐẶC TRỊ: Sử dụng thời gian thực cắt lấy 6 số cuối để làm mã đơn hàng duy nhất, không trùng lặp
     const orderCode = Number(String(Date.now()).slice(-6));
 
     const paymentData = {
       orderCode: orderCode,
       amount: Number(data.price),
       description: cleanDescription,
+      // ĐỒNG BỘ ĐƯỜNG DẪN THEO TÊN MIỀN CHÍNH THỨC CỦA BẠN
       cancelUrl: 'https://hotro.online/payment-cancel',
       returnUrl: 'https://hotro.online/payment-success',
     };
