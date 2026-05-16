@@ -10,12 +10,12 @@ media_folder: "public/images"
 public_folder: "/images"
 
 collections:
-  # --- TẬP HỢP 1: QUẢN LÝ EBOOKS ---
   - name: "ebooks"
     label: "Ebooks"
     folder: "src/content/ebooks"
     create: true
     slug: "{{slug}}"
+    preview_path: "shop/{{slug}}" # <--- THÊM DÒNG NÀY ĐỂ ĐỊNH HƯỚNG VÀO TRANG SHOP
     fields:
       - {label: "Tiêu đề", name: "title", widget: "string"}
       - {label: "Giá (VNĐ)", name: "price", widget: "number"}
