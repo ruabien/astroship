@@ -1,3 +1,85 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Container from '../../components/container.astro';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+// Hàm chuẩn hóa chuỗi để so sánh chính xác tuyệt đối
+function sanitizeSlug(text: string) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Xóa dấu tiếng Việt phát sinh nếu có
+    .replace(/[^a-z0-9-]/g, '')     // Chỉ giữ lại chữ, số và dấu gạch ngang
+    .trim();
+}
+
+const currentSlug = sanitizeSlug(slug || "");
+
+let title = "";
+let price = 0;
+let description = "";
+let image = "";
+let hasError = false;
+
+try {
+  // Quét toàn bộ file trong thư mục ebooks
+  const posts = import.meta.glob('/src/content/ebooks/*.md', { eager: true });
+  let matchedFile: any = null;
+
+  // Vòng lặp duyệt qua từng file để tìm kiếm linh hoạt, tránh lỗi lệch ký tự ẩn
+  for (const path in posts) {
+    const fileSlug = path.split('/').pop()?.replace('.md', '') || "";
+    if (sanitizeSlug(fileSlug) === currentSlug) {
+      matchedFile = posts[path];
+      break;
+    }
+  }
+
+  if (matchedFile) {
+    title = matchedFile.frontmatter.title || "Ebook";
+    price = matchedFile.frontmatter.price || 0;
+    description = matchedFile.frontmatter.description || "";
+    image = matchedFile.frontmatter.image || "";
+  } else {
+    hasError = true;
+  }
+} catch (e) {
+  hasError = true;
+}
+
+if (hasError) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout title={title}>
+  <Container>
+    <div class="max-w-4xl mx-auto my-10 grid md:grid-cols-2 gap-8 items-center">
+      <div>
+        {image && <img src={image} alt={title} class="w-full rounded-lg shadow-xl border" />}
+      </div>
+      
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
+        <p class="text-2xl font-extrabold text-blue-600 mb-4">{price.toLocaleString('vi-VN')} VNĐ</p>
+        <div class="text-gray-600 mb-6 border-b pb-6">{description}</div>
+        
+        <button 
+          id="btn-payos-buy" 
+          data-price={price} 
+          data-title={title}
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-200 cursor-pointer text-center"
+        >
+          Mua Ngay Với Mã QR
+        </button>
+      </div>
+    </div>
+  </Container>
+</Layout>
+
 <script>
   // Sử dụng JS thuần hoàn toàn để Astro không bao giờ bị lỗi biên dịch trang trắng
   const buyButton = document.getElementById('btn-payos-buy');
@@ -27,7 +109,7 @@
           // Điều hướng ngay lập tức sang cổng PayOS
           window.location.href = checkoutUrl;
         } else {
-          // Xuất lỗi thật ra màn hình nếu có
+          // Xuất lỗi thật ra màn hình nếu có để dễ theo dõi
           const errorMsg = data.error || data.message || 'Không lấy được link từ hệ thống';
           alert('Lỗi hệ thống: ' + errorMsg);
           buyButton.innerText = originalText; 
