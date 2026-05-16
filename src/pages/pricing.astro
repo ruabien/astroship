@@ -78,4 +78,61 @@ const pricing = [
       {pricing.map((item) => <PricingCard plan={item} />)}
     </div>
   </Container>
+---
+// Phần cấu hình phía trên của file pricing.astro (giữ nguyên các phần import cũ của bạn)
+---
+
+<div class="max-w-md mx-auto my-10 bg-white p-6 rounded-xl shadow-lg text-center border border-gray-100">
+  <h3 class="text-2xl font-bold text-gray-800 mb-2">Ebook Kiếm Tiền Tự Động</h3>
+  <p class="text-gray-500 mb-4">Trọn bộ hướng dẫn tự động hóa quy trình bán hàng bằng AI và Make.com</p>
+  <div class="text-3xl font-extrabold text-blue-600 mb-6">50.000 đ</div>
+  
+  <button 
+    id="btn-payos-buy" 
+    data-price="50000" 
+    data-title="Ebook Auto Money"
+    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-200 cursor-pointer"
+  >
+    Mua Ngay Với Mã QR
+  </button>
+</div>
+
+<script>
+  const buyButton = document.getElementById('btn-payos-buy');
+
+  buyButton?.addEventListener('click', async () => {
+    buyButton.innerText = "Đang khởi tạo mã QR...";
+    buyButton.setAttribute('disabled', 'true');
+
+    const price = buyButton.getAttribute('data-price');
+    const title = buyButton.getAttribute('data-title');
+
+    try {
+      const response = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price: Number(price), title })
+      });
+
+      const data = await response.json();
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        alert('Không lấy được link thanh toán. Vui lòng thử lại!');
+        resetButton();
+      }
+    } catch (error) {
+      alert('Lỗi kết nối hệ thống thanh toán!');
+      resetButton();
+    }
+  });
+
+  function resetButton() {
+    if (buyButton) {
+      buyButton.innerText = "Mua Ngay Với Mã QR";
+      buyButton.removeAttribute('disabled');
+    }
+  }
+</script>
 </Layout>
