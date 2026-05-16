@@ -1,19 +1,42 @@
 import type { APIRoute } from 'astro';
 
+// Hàm tự động loại bỏ dấu tiếng Việt và ký tự đặc biệt để PayOS chấp nhận
+function removeVietnameseTones(str: string) {
+  str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+  str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ẽ/g, "e");
+  str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+  str = str.replace(/ò|á|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+  str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+  str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+  str = str.replace(/đ/g, "d");
+  str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+  str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+  str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+  str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+  str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+  str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+  str = str.replace(/Đ/g, "D");
+  // Loại bỏ các ký tự đặc biệt, chỉ giữ lại chữ và số
+  return str.replace(/[^a-zA-Z0-9 ]/g, "");
+}
+
 export const POST: APIRoute = async ({ request }) => {
   try {
     const data = await request.json();
     
-    // Cấu hình đơn hàng gửi sang PayOS
+    // Tạo nội dung mô tả KHÔNG DẤU và không quá 20 ký tự theo luật PayOS
+    const rawDescription = `Mua ${data.title}`;
+    const cleanDescription = removeVietnameseTones(rawDescription).substring(0, 20);
+
     const paymentData = {
-      orderCode: Math.floor(Math.random() * 1000000), // Tạo mã đơn hàng ngẫu nhiên
-      amount: data.price, // Giá tiền từ client gửi lên
-      description: `Mua ${data.title.substring(0, 15)}`, // Mô tả ngắn dưới 20 ký tự
-      cancelUrl: 'https://astroship-cuv.pages.dev/payment-cancel', // Trang khi khách hủy
-      returnUrl: 'https://astroship-cuv.pages.dev/payment-success', // Trang khi thành công
+      orderCode: Math.floor(100000 + Math.random() * 900000), // Mã đơn hàng 6 số
+      amount: Number(data.price),
+      description: cleanDescription, 
+      cancelUrl: 'https://astroship-cuv.pages.dev/payment-cancel',
+      returnUrl: 'https://astroship-cuv.pages.dev/payment-success',
     };
 
-    // Gọi API của PayOS để tạo link thanh toán chứa mã QR
+    // Gọi API PayOS với biến môi trường của Cloudflare
     const response = await fetch('https://api-merchant.payos.vn/v2/payment-requests', {
       method: 'POST',
       headers: {
@@ -26,12 +49,16 @@ export const POST: APIRoute = async ({ request }) => {
 
     const result = await response.json();
     
-    // Trả link thanh toán về cho giao diện
-    return new Response(JSON.stringify({ checkoutUrl: result.data.checkoutUrl }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    if (result.error === 0 && result.data?.checkoutUrl) {
+      return new Response(JSON.stringify({ checkoutUrl: result.data.checkoutUrl }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } else {
+      // Trả về lỗi chi tiết từ hệ thống PayOS để dễ debug
+      return new Response(JSON.stringify({ error: result.message || 'PayOS tu choi don hang' }), { status: 400 });
+    }
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Lỗi tạo thanh toán' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Loi ket noi Server Astro' }), { status: 500 });
   }
 };
