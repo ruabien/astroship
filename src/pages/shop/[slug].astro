@@ -1,39 +1,43 @@
 <script>
-  const buyButton = document.getElementById('btn-payos-buy') as HTMLButtonElement;
-  buyButton?.addEventListener('click', async () => {
-    const originalText = buyButton.innerText;
-    buyButton.innerText = "Đang khởi tạo mã QR...";
-    buyButton.disabled = true;
-    
-    const price = buyButton.getAttribute('data-price');
-    const title = buyButton.getAttribute('data-title');
-
-    try {
-      const response = await fetch('/api/create-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price: Number(price), title })
-      });
+  // Sử dụng JS thuần hoàn toàn để Astro không bao giờ bị lỗi biên dịch trang trắng
+  const buyButton = document.getElementById('btn-payos-buy');
+  
+  if (buyButton) {
+    buyButton.addEventListener('click', async () => {
+      const originalText = buyButton.innerText;
+      buyButton.innerText = "Đang khởi tạo mã QR...";
+      buyButton.setAttribute('disabled', 'true');
       
-      const data = await response.json();
-      
-      // GIẢI PHÁP ĐẶC TRỊ: Quét mọi cấu trúc phản hồi có thể có của PayOS để lấy link điều hướng
-      const checkoutUrl = data.checkoutUrl || data.data?.checkoutUrl;
+      const price = buyButton.getAttribute('data-price');
+      const title = buyButton.getAttribute('data-title');
 
-      if (checkoutUrl) {
-        // Nếu tìm thấy link, lập tức chuyển hướng người dùng sang trang quét mã QR của PayOS
-        window.location.href = checkoutUrl;
-      } else {
-        // Nếu không có link, xuất thẳng lý do cụ thể mà hệ thống phản hồi để biết đường xử lý
-        const errorMsg = data.error || data.message || 'Không lấy được link từ hệ thống';
-        alert(`Lỗi hệ thống: ${errorMsg}`);
-        buyButton.innerText = originalText; 
-        buyButton.disabled = false;
+      try {
+        const response = await fetch('/api/create-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ price: Number(price), title })
+        });
+        
+        const data = await response.json();
+        
+        // Bốc tách link quét mã QR từ mọi cấu trúc dữ liệu trả về
+        const checkoutUrl = data.checkoutUrl || (data.data && data.data.checkoutUrl);
+
+        if (checkoutUrl) {
+          // Điều hướng ngay lập tức sang cổng PayOS
+          window.location.href = checkoutUrl;
+        } else {
+          // Xuất lỗi thật ra màn hình nếu có
+          const errorMsg = data.error || data.message || 'Không lấy được link từ hệ thống';
+          alert('Lỗi hệ thống: ' + errorMsg);
+          buyButton.innerText = originalText; 
+          buyButton.removeAttribute('disabled');
+        }
+      } catch (err) {
+        alert('Lỗi kết nối máy chủ Cloudflare!');
+        buyButton.innerText = originalText;
+        buyButton.removeAttribute('disabled');
       }
-    } catch (err) {
-      alert('Lỗi kết nối máy chủ Cloudflare!');
-      buyButton.innerText = originalText;
-      buyButton.disabled = false;
-    }
-  });
+    });
+  }
 </script>
