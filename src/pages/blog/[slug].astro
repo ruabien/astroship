@@ -1,62 +1,117 @@
 ---
-import { getCollection } from "astro:content";
-import Layout from "@/layouts/Layout.astro";
-import Container from "@/components/container.astro";
+import Layout from '../../layouts/Layout.astro';
+import Container from '../../components/container.astro';
 
-// Generate a new path for every collection entry
-export async function getStaticPaths() {
-  const blogEntries = await getCollection("blog");
-  return blogEntries.map((entry) => ({
-    params: { slug: entry.slug },
-    props: { entry },
-  }));
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+// Hàm chuẩn hóa chuỗi sạch để so sánh chính xác tuyệt đối, né lỗi ký tự ẩn
+function sanitizeSlug(text: string) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Khử dấu tiếng Việt phát sinh
+    .replace(/[^a-z0-9-]/g, '')     // Chỉ giữ lại chữ thường, số và dấu gạch ngang
+    .trim();
 }
 
-// Get the entry directly from the prop on render
-const { entry } = Astro.props;
-const { Content } = await entry.render();
+const currentSlug = sanitizeSlug(slug || "");
+
+let title = "";
+let description = "";
+let image = "";
+let date = "";
+let author = "";
+let Content: any = null;
+let hasError = false;
+
+try {
+  // Quét toàn bộ các file bài viết Markdown (.md) trong thư mục blog
+  const posts = import.meta.glob('/src/content/blog/*.md', { eager: true });
+  let matchedFile: any = null;
+
+  // Vòng lặp tìm kiếm thông minh, tránh lệch pha ký tự hoa thường hay khoảng trắng
+  for (const path in posts) {
+    const fileSlug = path.split('/').pop()?.replace('.md', '') || "";
+    if (sanitizeSlug(fileSlug) === currentSlug) {
+      matchedFile = posts[path];
+      break;
+    }
+  }
+
+  if (matchedFile) {
+    title = matchedFile.frontmatter.title || "Bài viết không tiêu đề";
+    description = matchedFile.frontmatter.description || "";
+    image = matchedFile.frontmatter.image || "";
+    date = matchedFile.frontmatter.publishDate || matchedFile.frontmatter.date || "";
+    author = matchedFile.frontmatter.author || "Quản trị viên";
+    
+    // Lấy hàm render nội dung bài viết dạng HTML
+    Content = matchedFile.Content;
+  } else {
+    hasError = true;
+  }
+} catch (e) {
+  hasError = true;
+}
+
+// Nếu không tìm thấy bài viết hoặc code lỗi, chuyển hướng êm đẹp về trang 404 thay vì văng lỗi 500
+if (hasError || !Content) {
+  return Astro.redirect('/404');
+}
 ---
 
-<Layout title={entry.data.title}>
+<Layout title={title}>
   <Container>
-    <div class="mx-auto max-w-3xl mt-14">
-      <span class="text-blue-400 uppercase tracking-wider text-sm font-medium">
-        {entry.data.category}
-      </span>
-      <h1
-        class="text-4xl lg:text-5xl font-bold lg:tracking-tight mt-1 lg:leading-tight">
-        {entry.data.title}
-      </h1>
-      <div class="flex gap-2 mt-3 items-center flex-wrap md:flex-nowrap">
-        <span class="text-gray-400">
-          {entry.data.author}
-        </span>
-        <span class="text-gray-400">•</span>
-        <time
-          class="text-gray-400"
-          datetime={entry.data.publishDate.toISOString()}>
-          {entry.data.publishDate.toDateString()}
-        </time>
-        <span class="text-gray-400 hidden md:block">•</span>
-        <div class="w-full md:w-auto flex flex-wrap gap-3">
-          {
-            entry.data.tags.map((tag) => (
-              <span class="text-sm text-gray-500">#{tag}</span>
-            ))
-          }
+    <div class="max-w-3xl mx-auto my-10">
+      {/* 1. Phần Chân trang tiêu đề: Ngày tháng, Tác giả */}
+      <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-950 mb-4 leading-tight">
+          {title}
+        </h1>
+        <div class="flex items-center justify-center gap-4 text-sm text-gray-500">
+          <span>✍️ {author}</span>
+          {date && (
+            <>
+              <span>•</span>
+              <span>📅 {new Date(date).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            </>
+          )}
         </div>
       </div>
-    </div>
 
-    <div class="mx-auto prose prose-lg mt-6 max-w-3xl">
-      <Content />
-    </div>
-    <div class="text-center mt-8">
-      <a
-        href="/blog"
-        class="bg-gray-100 px-5 py-3 rounded-md hover:bg-gray-200 transition"
-        >← Back to Blog</a
-      >
+      {/* 2. Ảnh bìa bài viết lớn tràn viền */}
+      {image && (
+        <div class="mb-10 aspect-[16/9] overflow-hidden rounded-xl shadow-md">
+          <img src={image} alt={title} class="w-full h-full object-cover" />
+        </div>
+      )}
+
+      {/* 3. KHỐI NỘI DUNG CHI TIẾT BÀI VIẾT (Tự động dàn trang theo chuẩn Markdown Tailwind) */}
+      <article class="prose prose-blue max-w-none text-gray-800 leading-relaxed mx-auto">
+        <Content />
+      </article>
+
+      {/* 4. Nút quay lại danh sách Blog */}
+      <div class="text-center border-t pt-8 mt-12">
+        <a 
+          href="/blog" 
+          class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold transition-colors"
+        >
+          ← Quay lại danh sách bài viết
+        </a>
+      </div>
     </div>
   </Container>
 </Layout>
+
+<style is:global>
+  /* Bổ sung CSS bổ trợ để các thẻ như h2, h3, p trong file .md hiển thị đẹp đẽ */
+  .prose h2 { @apply text-2xl font-bold text-gray-900 mt-8 mb-4; }
+  .prose h3 { @apply text-xl font-bold text-gray-900 mt-6 mb-3; }
+  .prose p { @apply mb-5 text-gray-700 text-[16.5px] leading-relaxed; }
+  .prose ul { @apply list-disc list-inside mb-5 pl-4; }
+  .prose ol { @apply list-decimal list-inside mb-5 pl-4; }
+  .prose img { @apply rounded-lg my-6 max-w-full h-auto mx-auto; }
+</style>
