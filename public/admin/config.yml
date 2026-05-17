@@ -30,7 +30,7 @@ collections:
       - {label: "Ảnh bìa", name: "image", widget: "image"}
       - {label: "Nội dung chi tiết", name: "body", widget: "markdown"}
 
-  # --- TẬP HỢP 2: QUẢN LÝ BLOG (Đã cấu trúc lại để KHỚP 100% với Schema Astro) ---
+  # --- TẬP HỢP 2: QUẢN LÝ BLOG (Chuẩn hóa Dropdown danh mục khớp Menu trang chủ) ---
   - name: "blog"
     label: "Bài viết Blog"
     folder: "src/content/blog"
@@ -40,12 +40,12 @@ collections:
       - {label: "Tiêu đề bài viết", name: "title", widget: "string"}
       - {label: "Mô tả ngắn", name: "snippet", widget: "text"}
       
-      # Sửa lỗi Ngày đăng: Ép về định dạng chuỗi chữ YYYY-MM-DD
+      # Tự động bọc dấu ngoặc kép khi xuất bản ngày đăng để né triệt để lỗi Schema date/string
       - {label: "Ngày đăng", name: "publishDate", widget: "datetime", format: '"YYYY-MM-DD"', date_format: "YYYY-MM-DD", time_format: false}
       
       - {label: "Tác giả", name: "author", widget: "string", default: "Admin"}
       
-      # Sửa lỗi Hình ảnh: Biến thành cấu trúc Object (có src và alt) đúng ý Schema
+      # Cấu hình hình ảnh dạng Object (gồm src và alt) bảo mật hệ thống biên dịch
       - label: "Hình ảnh đại diện"
         name: "image"
         widget: "object"
@@ -53,8 +53,17 @@ collections:
           - {label: "Chọn ảnh", name: "src", widget: "image"}
           - {label: "Chữ thay thế ảnh (Alt)", name: "alt", widget: "string", default: "Hình ảnh bài viết"}
 
-      # Sửa lỗi thiếu thuộc tính: Tự động điền ngầm các giá trị bắt buộc còn thiếu
-      - {label: "Danh mục (Category)", name: "category", widget: "string", default: "Technology"}
+      # NÂNG CẤP QUYẾT ĐỊNH: Biến ô nhập chữ thành Dropdown chọn 4 chuyên mục chuyên gia Pháp lý AI
+      - label: "Danh mục (Category)"
+        name: "category"
+        widget: "select"
+        default: "ai-kiem-sat"
+        options:
+          - { label: "AI & Thực Tiễn Kiểm Sát", value: "ai-kiem-sat" }
+          - { label: "Kỹ Nghệ Prompt Pháp Lý", value: "prompt-phap-ly" }
+          - { label: "Pháp Luật Kỷ Nguyên Số", value: "phap-luat-so" }
+          - { label: "Nhật Ký Kiểm Sát", value: "nhat-ky-nghe" }
+
       - {label: "Từ khóa (Tags)", name: "tags", widget: "list", default: ["blog"]}
       - {label: "Lưu nháp? (Draft)", name: "draft", widget: "boolean", default: false}
       
