@@ -59,9 +59,9 @@ collections:
         widget: "select"
         default: "ai-kiem-sat"
         options:
-          - { label: "AI & Thực Tiễn Kiểm Sát", value: "ai-kiem-sat" }
-          - { label: "Kỹ Nghệ Prompt Pháp Lý", value: "prompt-phap-ly" }
-          - { label: "Pháp Luật Kỷ Nguyên Số", value: "phap-luat-so" }
+          - { label: "AI Kiểm Sát", value: "ai-kiem-sat" }
+          - { label: "Prompt Pháp Lý", value: "prompt-phap-ly" }
+          - { label: "Pháp Luật Số", value: "phap-luat-so" }
           - { label: "Nhật Ký Kiểm Sát", value: "nhat-ky-nghe" }
 
       - {label: "Từ khóa (Tags)", name: "tags", widget: "list", default: ["blog"]}
