@@ -41,7 +41,7 @@ collections:
       - {label: "Mô tả ngắn", name: "snippet", widget: "text"}
       
       # Sửa lỗi Ngày đăng: Ép về định dạng chuỗi chữ YYYY-MM-DD
-      - {label: "Ngày đăng", name: "publishDate", widget: "datetime", format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false}
+      - {label: "Ngày đăng", name: "publishDate", widget: "datetime", format: '"YYYY-MM-DD"', date_format: "YYYY-MM-DD", time_format: false}
       
       - {label: "Tác giả", name: "author", widget: "string", default: "Admin"}
       
