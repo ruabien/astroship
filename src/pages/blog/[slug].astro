@@ -43,7 +43,25 @@ try {
   if (matchedFile) {
     title = matchedFile.frontmatter.title || "Bài viết không tiêu đề";
     description = matchedFile.frontmatter.description || "";
-    image = matchedFile.frontmatter.image || "";
+    
+    // GIẢI PHÁP ĐẶC TRỊ LỖI [object Object]:
+    const rawImage = matchedFile.frontmatter.image;
+    
+    if (rawImage && typeof rawImage === 'object') {
+      // Nếu image là một Object (sinh ra từ Admin mới), ta lấy thuộc tính .src của nó
+      image = rawImage.src || "";
+    } else if (typeof rawImage === 'string') {
+      // Nếu bài viết cũ lưu image dạng chuỗi văn bản thường, ta giữ nguyên chuỗi đó
+      image = rawImage;
+    } else {
+      image = "";
+    }
+    
+    // Sửa lỗi nếu đường dẫn bị dính chữ "/src/" làm Cloudflare không đọc được
+    if (image.startsWith('/src/')) {
+      image = image.replace('/src/', '/images/');
+    }
+    
     date = matchedFile.frontmatter.publishDate || matchedFile.frontmatter.date || "";
     author = matchedFile.frontmatter.author || "Quản trị viên";
     
