@@ -56,7 +56,7 @@ try {
   hasError = true;
 }
 
-// Nếu không tìm thấy bài viết hoặc code lỗi, chuyển hướng êm đẹp về trang 404 thay vì văng lỗi 500
+// Nếu không tìm thấy bài viết hoặc code lỗi, chuyển hướng êm đẹp về trang 404
 if (hasError || !Content) {
   return Astro.redirect('/404');
 }
@@ -64,7 +64,7 @@ if (hasError || !Content) {
 
 <Layout title={title}>
   <Container>
-    <div class="max-w-3xl mx-auto my-10">
+    <div class="max-w-3xl mx-auto my-10 px-4">
       {/* 1. Phần Chân trang tiêu đề: Ngày tháng, Tác giả */}
       <div class="text-center mb-8">
         <h1 class="text-3xl md:text-4xl font-extrabold text-gray-950 mb-4 leading-tight">
@@ -88,13 +88,13 @@ if (hasError || !Content) {
         </div>
       )}
 
-      {/* 3. KHỐI NỘI DUNG CHI TIẾT BÀI VIẾT (Tự động dàn trang theo chuẩn Markdown Tailwind) */}
-      <article class="prose prose-blue max-w-none text-gray-800 leading-relaxed mx-auto">
+      {/* 3. KHỐI NỘI DUNG CHI TIẾT BÀI VIẾT (Sử dụng CSS Class sạch, không dùng @apply lỗi của Tailwind v4) */}
+      <article class="blog-markdown-content max-w-none text-gray-800 leading-relaxed mx-auto">
         <Content />
       </article>
 
       {/* 4. Nút quay lại danh sách Blog */}
-      <div class="text-center border-t pt-8 mt-12">
+      <div class="text-center border-t pt-8 mt-12 border-gray-100">
         <a 
           href="/blog" 
           class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold transition-colors"
@@ -107,11 +107,47 @@ if (hasError || !Content) {
 </Layout>
 
 <style is:global>
-  /* Bổ sung CSS bổ trợ để các thẻ như h2, h3, p trong file .md hiển thị đẹp đẽ */
-  .prose h2 { @apply text-2xl font-bold text-gray-900 mt-8 mb-4; }
-  .prose h3 { @apply text-xl font-bold text-gray-900 mt-6 mb-3; }
-  .prose p { @apply mb-5 text-gray-700 text-[16.5px] leading-relaxed; }
-  .prose ul { @apply list-disc list-inside mb-5 pl-4; }
-  .prose ol { @apply list-decimal list-inside mb-5 pl-4; }
-  .prose img { @apply rounded-lg my-6 max-w-full h-auto mx-auto; }
+  /* GIẢI PHÁP ĐẶC TRỊ TAILWIND V4: Sử dụng CSS thuần 100% để bộ biên dịch Vite chạy mượt mà, không bao giờ lỗi */
+  .blog-markdown-content h2 {
+    font-size: 1.5rem; /* Tương đương text-2xl */
+    font-weight: 700;    /* Tương đương font-bold */
+    color: #111827;      /* Tương đương text-gray-900 */
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+  .blog-markdown-content h3 {
+    font-size: 1.25rem; /* Tương đương text-xl */
+    font-weight: 700;
+    color: #111827;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .blog-markdown-content p {
+    margin-bottom: 1.25rem;
+    color: #374151;      /* Tương đương text-gray-700 */
+    font-size: 1.05rem;
+    line-height: 1.75;
+  }
+  .blog-markdown-content ul {
+    list-style-type: disc;
+    list-style-position: inside;
+    margin-bottom: 1.25rem;
+    padding-left: 1rem;
+  }
+  .blog-markdown-content ol {
+    list-style-type: decimal;
+    list-style-position: inside;
+    margin-bottom: 1.25rem;
+    padding-left: 1rem;
+  }
+  .blog-markdown-content img {
+    border-radius: 0.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
 </style>
