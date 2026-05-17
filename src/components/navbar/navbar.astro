@@ -4,37 +4,31 @@ import Link from "@/components/ui/link.astro";
 import Dropdown from "./dropdown.astro";
 import { Astronav, MenuItems, MenuIcon } from "astro-navbar";
 
+// CẤU HÌNH MENU MỚI: Tinh gọn, tích hợp Dropdown danh mục Blog theo yêu cầu
 const menuitems = [
   {
-    title: "Features",
-    path: "#",
+    title: "Trang chủ",
+    path: "/",
+  },
+  {
+    title: "Thư viện AI Pháp lý",
+    path: "/shop",
+  },
+  {
+    title: "Góc Kiểm Sát",
+    path: "/blog",
+    // Kích hoạt nút Dropdown con chứa 4 chuyên mục cốt lõi
     children: [
-      { title: "Action", path: "/" },
-      { title: "Another action", path: "#" },
-      { title: "Dropdown Submenu", path: "#" },
-      { title: "404 Page", path: "/404" },
+      { title: "Tất cả bài viết", path: "/blog" },
+      { title: "AI & Thực Tiễn Kiểm Sát", path: "/blog/category/ai-kiem-sat" },
+      { title: "Kỹ Nghệ Prompt Pháp Lý", path: "/blog/category/prompt-phap-ly" },
+      { title: "Pháp Luật Kỷ Nguyên Số", path: "/blog/category/phap-luat-so" },
+      { title: "Nhật Ký Kiểm Sát", path: "/blog/category/nhat-ky-nghe" },
     ],
   },
   {
-    title: "Pricing",
-    path: "/pricing",
-  },
-  {
-    title: "About",
+    title: "Về tôi",
     path: "/about",
-  },
-  {
-    title: "Blog",
-    path: "/blog",
-  },
-  {
-    title: "Contact",
-    path: "/contact",
-  },
-  {
-    title: "Pro Version",
-    badge: true,
-    path: "https://astroship-pro.web3templates.com/",
   },
 ];
 ---
@@ -43,10 +37,9 @@ const menuitems = [
   <header class="flex flex-col lg:flex-row justify-between items-center my-5">
     <Astronav>
       <div class="flex w-full lg:w-auto items-center justify-between">
-        <a href="/" class="text-lg"
-          ><span class="font-bold text-slate-800">Astro</span><span
-            class="text-slate-500">ship</span
-          >
+        {/* Đổi tên Logo thương hiệu sang HoTro.Online sắc nét */}
+        <a href="/" class="text-lg font-extrabold text-blue-600 tracking-tight">
+          HoTro<span class="text-gray-800">.Online</span>
         </a>
         <div class="block lg:hidden">
           <MenuIcon class="w-4 h-4 text-gray-800" />
@@ -69,13 +62,9 @@ const menuitems = [
                   <li>
                     <a
                       href={item.path}
-                      class="flex lg:px-3 py-2 items-center text-gray-600 hover:text-gray-900">
+                      class="flex lg:px-3 py-2 items-center text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                    >
                       <span> {item.title}</span>
-                      {item.badge && (
-                        <span class="ml-1 px-2 py-0.5 text-[10px] animate-pulse font-semibold uppercase text-white bg-indigo-600 rounded-full">
-                          New
-                        </span>
-                      )}
                     </a>
                   </li>
                 )}
@@ -83,17 +72,12 @@ const menuitems = [
             ))
           }
         </ul>
-        <div class="lg:hidden flex items-center mt-3 gap-4">
-          <Link href="#" style="muted" block size="md">Log in</Link>
-          <Link href="#" size="md" block>Sign up</Link>
-        </div>
       </MenuItems>
     </Astronav>
     <div>
-      <div class="hidden lg:flex items-center gap-4">
-        <a href="#">Log in</a>
-        <Link href="#" size="md">Sign up</Link>
-      </div>
+      {/* Đã lược bỏ toàn bộ các khối nút "Log in / Sign up" dư thừa của template gốc 
+        để trả lại không gian thoáng đãng, sang trọng chuẩn website chuyên gia.
+      */}
     </div>
   </header>
 </Container>
