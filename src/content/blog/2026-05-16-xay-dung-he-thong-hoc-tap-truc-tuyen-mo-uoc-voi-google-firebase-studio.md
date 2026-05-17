@@ -5,7 +5,7 @@ snippet: >-
 
 
   Sau nhiều tháng nghiên cứu, phát triển và thử nghiệm, mình vô cùng hạnh phúc được chia sẻ với mọi người về hệ thống học tập trực tuyến hoàn toàn mới tại
-publishDate: 2026-05-17
+publishDate: "2026-05-17"
 author: Admin
 image:
   alt: Ảnh minh họa
