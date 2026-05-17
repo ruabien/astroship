@@ -5,7 +5,7 @@ backend:
   base_url: https://decap-auth-ruabien.ruabien1504.workers.dev
   auth_endpoint: auth
 
-display_url: https://astroship-cuv.pages.dev
+display_url: https://hotro.online
 media_folder: "public/images"
 public_folder: "/images"
 
@@ -16,12 +16,12 @@ slug:
   sanitize_replacement: "-"
 
 collections:
-  # --- TẬP HỢP 1: QUẢN LÝ EBOOKS ---
+  # --- TẬP HỢP 1: QUẢN LÝ EBOOKS (Giữ nguyên cấu trúc chạy tốt của bạn) ---
   - name: "ebooks"
     label: "Ebooks"
     folder: "src/content/ebooks"
     create: true
-    slug: "{{title}}" # Đổi từ {{slug}} thành {{title}} để kích hoạt bộ lọc bỏ dấu
+    slug: "{{title}}"
     preview_path: "shop/{{slug}}"
     fields:
       - {label: "Tiêu đề", name: "title", widget: "string"}
@@ -30,7 +30,7 @@ collections:
       - {label: "Ảnh bìa", name: "image", widget: "image"}
       - {label: "Nội dung chi tiết", name: "body", widget: "markdown"}
 
-  # --- TẬP HỢP 2: QUẢN LÝ BLOG ---
+  # --- TẬP HỢP 2: QUẢN LÝ BLOG (Đã cấu trúc lại để KHỚP 100% với Schema Astro) ---
   - name: "blog"
     label: "Bài viết Blog"
     folder: "src/content/blog"
@@ -38,8 +38,24 @@ collections:
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     fields:
       - {label: "Tiêu đề bài viết", name: "title", widget: "string"}
-      - {label: "Ngày đăng", name: "publishDate", widget: "datetime"}
-      - {label: "Tác giả", name: "author", widget: "string", default: "Admin"}
-      - {label: "Hình ảnh đại diện", name: "image", widget: "image"}
       - {label: "Mô tả ngắn", name: "snippet", widget: "text"}
+      
+      # Sửa lỗi Ngày đăng: Ép về định dạng chuỗi chữ YYYY-MM-DD
+      - {label: "Ngày đăng", name: "publishDate", widget: "datetime", format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false}
+      
+      - {label: "Tác giả", name: "author", widget: "string", default: "Admin"}
+      
+      # Sửa lỗi Hình ảnh: Biến thành cấu trúc Object (có src và alt) đúng ý Schema
+      - label: "Hình ảnh đại diện"
+        name: "image"
+        widget: "object"
+        fields:
+          - {label: "Chọn ảnh", name: "src", widget: "image"}
+          - {label: "Chữ thay thế ảnh (Alt)", name: "alt", widget: "string", default: "Hình ảnh bài viết"}
+
+      # Sửa lỗi thiếu thuộc tính: Tự động điền ngầm các giá trị bắt buộc còn thiếu
+      - {label: "Danh mục (Category)", name: "category", widget: "string", default: "Technology"}
+      - {label: "Từ khóa (Tags)", name: "tags", widget: "list", default: ["blog"]}
+      - {label: "Lưu nháp? (Draft)", name: "draft", widget: "boolean", default: false}
+      
       - {label: "Nội dung bài viết", name: "body", widget: "markdown"}
