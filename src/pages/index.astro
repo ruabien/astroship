@@ -1,17 +1,230 @@
 ---
-import Container from "@/components/container.astro";
-import Cta from "@/components/cta.astro";
-import Features from "@/components/features.astro";
-import Hero from "@/components/hero.astro";
-import Logos from "@/components/logos.astro";
-import Layout from "@/layouts/Layout.astro";
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/container.astro";
+
+export const prerender = false;
+
+// 1. TỰ ĐỘNG BỐC 3 BÀI VIẾT BLOG MỚI NHẤT
+let latestPosts: any[] = [];
+try {
+  const posts = import.meta.glob('/src/content/blog/*.md', { eager: true });
+  const allPosts = Object.keys(posts).map(path => {
+    const file: any = posts[path];
+    return {
+      slug: path.split('/').pop()?.replace('.md', '') || "",
+      title: file.frontmatter.title || "Bài viết mới",
+      snippet: file.frontmatter.snippet || file.frontmatter.description || "",
+      image: file.frontmatter.image || "",
+      category: file.frontmatter.category || "ai-kiem-sat",
+      publishDate: file.frontmatter.publishDate || file.frontmatter.date || ""
+    };
+  });
+  
+  // Sắp xếp bài mới nhất lên đầu và lấy đúng 3 bài
+  latestPosts = allPosts
+    .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime())
+    .slice(0, 3);
+} catch (e) {
+  console.error("Lỗi lấy bài viết trang chủ:", e);
+}
+
+// 2. TỰ ĐỘNG BỐC CUỐN SÁCH EBOOK ĐỂ HIỂN THỊ NỔI BẬT
+let featuredEbook: any = null;
+try {
+  const ebooks = import.meta.glob('/src/content/ebooks/*.md', { eager: true });
+  const allEbooks = Object.keys(ebooks).map(path => {
+    const file: any = posts[path]; // Sửa logic quét ebook
+    const fileEbook: any = ebooks[path];
+    return {
+      slug: path.split('/').pop()?.replace('.md', '') || "",
+      title: fileEbook.frontmatter.title || "Ebook Công Nghệ",
+      price: fileEbook.frontmatter.price || 0,
+      oldPrice: fileEbook.frontmatter.oldPrice || 0,
+      image: fileEbook.frontmatter.image || "",
+      description: fileEbook.frontmatter.description || ""
+    };
+  });
+  featuredEbook = allEbooks[0] || null; // Lấy cuốn sách đầu tiên làm sản phẩm đinh
+} catch (e) {}
+
+// Hàm hỗ trợ hiển thị tên Danh mục có dấu ngoài giao diện
+const getCategoryLabel = (cat: string) => {
+  const labels: Record<string, string> = {
+    "ai-kiem-sat": "🤖 AI & Thực Tiễn Kiểm Sát",
+    "prompt-phap-ly": "📝 Kỹ Nghệ Prompt Pháp Lý",
+    "phap-luat-so": "⚖️ Pháp Luật Kỷ Nguyên Số",
+    "nhat-ky-nghe": "☕ Nhật Ký Kiểm Sát"
+  };
+  return labels[cat] || "📚 Tin Tức Pháp Lý";
+};
 ---
 
-<Layout title="">
-  <Container>
-    <Hero />
-    <Features />
-    <Logos />
-    <Cta />
-  </Container>
+<Layout title="HoTro.Online - Số Hóa Pháp Luật & Trí Tuệ Nhân Tạo">
+  
+  <div class="overflow-hidden bg-white py-12 sm:py-20">
+    <Container>
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight mb-6">
+            Số Hóa Pháp Luật – Tăng Tốc Hiệu Suất Bằng <span class="text-blue-600">AI</span>
+          </h1>
+          <p class="text-lg text-slate-600 leading-relaxed mb-8">
+            Góc chia sẻ thực chiến của một Kiểm sát viên về ứng dụng trí tuệ nhân tạo, tối ưu hóa quy trình tố tụng, rà soát chứng cứ và làm chủ kỹ nghệ Prompt chuyên sâu trong ngành Luật.
+          </p>
+          <div class="flex flex-wrap gap-4">
+            <a href="/shop" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition-colors text-center">
+              🏢 Khám phá Thư viện AI
+            </a>
+            <a href="/blog" class="border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold py-3 px-6 rounded-xl transition-colors text-center">
+              📖 Đọc Blog thực chiến
+            </a>
+          </div>
+        </div>
+        <div class="flex justify-center relative">
+          <div class="w-full aspect-video md:aspect-[4/3] rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-100 flex flex-col items-center justify-center p-8 text-center shadow-inner">
+            <span class="text-6xl mb-4">⚖️</span>
+            <span class="text-4xl mb-4">⚡</span>
+            <span class="text-2xl font-bold text-slate-800">LegalTech & AI System</span>
+            <p class="text-sm text-slate-500 mt-2">Automating Legal Workflows Securely</p>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </div>
+
+  <div class="bg-slate-50 border-y border-slate-100 py-8">
+    <Container>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-6 text-center">
+        <div class="p-4">
+          <div class="text-3xl md:text-4xl font-extrabold text-blue-600 mb-1">5X</div>
+          <div class="text-sm font-medium text-slate-500 uppercase tracking-wider">Tốc độ xử lý hồ sơ</div>
+        </div>
+        <div class="p-4">
+          <div class="text-3xl md:text-4xl font-extrabold text-emerald-600 mb-1">100%</div>
+          <div class="text-sm font-medium text-slate-500 uppercase tracking-wider">Rà soát lỗi logic văn bản</div>
+        </div>
+        <div class="p-4 col-span-2 md:col-span-1">
+          <div class="text-3xl md:text-4xl font-extrabold text-indigo-600 mb-1">0đ</div>
+          <div class="text-sm font-medium text-slate-500 uppercase tracking-wider">Chi phí tiếp cận tri thức</div>
+        </div>
+      </div>
+    </Container>
+  </div>
+
+  <div class="py-16 bg-white">
+    <Container>
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h2 class="text-3xl font-bold text-slate-900 mb-3">Lĩnh vực Nghiên cứu & Ứng dụng</h2>
+        <p class="text-slate-500">Hệ thống danh mục tri thức được cấu trúc bài bản phục vụ công tác số hóa ngành luật.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <a href="/blog/category/ai-kiem-sat" class="p-6 border border-slate-200 rounded-xl hover:border-blue-500 hover:shadow-lg transition-all group">
+          <div class="text-3xl mb-4">🤖</div>
+          <h3 class="text-lg font-bold text-slate-800 group-hover:text-blue-600 mb-2">AI & Kiểm Sát</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">Tự động hóa tóm tắt tiến trình án, phân tích lời khai và hệ thống hóa chứng cứ pháp lý.</p>
+        </a>
+        <a href="/blog/category/prompt-phap-ly" class="p-6 border border-slate-200 rounded-xl hover:border-blue-500 hover:shadow-lg transition-all group">
+          <div class="text-3xl mb-4">📝</div>
+          <h3 class="text-lg font-bold text-slate-800 group-hover:text-blue-600 mb-2">Prompt Pháp Lý</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">Kỹ nghệ thiết kế câu lệnh ép các mô hình ngôn ngữ lớn xuất bản văn bản chuẩn chỉ hành văn ngành.</p>
+        </a>
+        <a href="/blog/category/phap-luat-so" class="p-6 border border-slate-200 rounded-xl hover:border-blue-500 hover:shadow-lg transition-all group">
+          <div class="text-3xl mb-4">⚖️</div>
+          <h3 class="text-lg font-bold text-slate-800 group-hover:text-blue-600 mb-2">Kỷ Nguyên Số</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">Luận bàn về tội phạm công nghệ cao, chứng cứ Deepfake và hành lang pháp trị cho AI toàn cầu.</p>
+        </a>
+        <a href="/blog/category/nhat-ky-nghe" class="p-6 border border-slate-200 rounded-xl hover:border-blue-500 hover:shadow-lg transition-all group">
+          <div class="text-3xl mb-4">☕</div>
+          <h3 class="text-lg font-bold text-slate-800 group-hover:text-blue-600 mb-2">Nhật Ký Kiểm Sát</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">Góc nhìn nhân văn, trăn trở phía sau những bản án và nghệ thuật tư duy sắc bén của người bảo vệ pháp luật.</p>
+        </a>
+      </div>
+    </Container>
+  </div>
+
+  <div class="py-16 bg-slate-50 border-y border-slate-100">
+    <Container>
+      <div class="flex flex-col md:flex-row justify-between items-baseline mb-10">
+        <div>
+          <h2 class="text-3xl font-bold text-slate-900 mb-2">Bài viết mới nhất</h2>
+          <p class="text-slate-500">Những bài nghiên cứu, hướng dẫn thực chiến vừa lên sóng.</p>
+        </div>
+        <a href="/blog" class="text-blue-600 hover:text-blue-800 font-semibold text-sm mt-4 md:mt-0 inline-block">Xem tất cả bài viết →</a>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {latestPosts.map((post) => {
+          const imgUrl = typeof post.image === 'object' ? post.image.src : post.image;
+          return (
+            <a href={`/blog/${post.slug}`} class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col group">
+              <div class="aspect-[16/10] bg-slate-100 overflow-hidden relative">
+                {imgUrl ? (
+                  <img src={imgUrl} alt={post.title} class="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300" />
+                ) : (
+                  <div class="w-full h-full flex items-center justify-center text-slate-400 text-sm">Hình ảnh đang cập nhật</div>
+                )}
+              </div>
+              <div class="p-5 flex flex-col justify-between flex-1">
+                <div>
+                  <span class="text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-600 rounded-md inline-block mb-3">
+                    {getCategoryLabel(post.category)}
+                  </span>
+                  <h3 class="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug mb-2">
+                    {post.title}
+                  </h3>
+                  <p class="text-slate-500 text-sm line-clamp-2 mb-4">{post.snippet}</p>
+                </div>
+                <div class="text-xs text-slate-400 border-t pt-3">
+                  📅 {new Date(post.publishDate).toLocaleDateString('vi-VN', {year: 'numeric', month: 'short', day: 'numeric'})}
+                </div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </Container>
+  </div>
+
+  {featuredEbook && (
+    <div class="py-16 bg-white">
+      <Container>
+        <div class="bg-slate-900 text-white rounded-3xl p-8 md:p-12 shadow-xl relative overflow-hidden">
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-900/40 via-transparent to-transparent"></div>
+          <div class="grid md:grid-cols-12 gap-8 items-center relative z-10">
+            <div class="md:col-span-4 flex justify-center">
+              <div class="w-48 md:w-full max-w-[240px] aspect-[3/4] bg-gradient-to-br from-blue-600 to-indigo-800 rounded-xl shadow-2xl flex flex-col justify-between p-6 border border-blue-400/30 transform -rotate-2">
+                <span class="text-xs uppercase tracking-widest text-blue-200 font-bold">Cẩm nang đặc quyền</span>
+                <h4 class="text-lg font-extrabold text-white leading-tight mt-4">{featuredEbook.title}</h4>
+                <div class="border-t border-blue-400/20 pt-4 mt-4 text-[10px] text-blue-300">HoTro.Online Publication © 2026</div>
+              </div>
+            </div>
+            <div class="md:col-span-8">
+              <span class="text-xs uppercase tracking-widest text-blue-400 font-bold block mb-2">Tài liệu phát hành đinh</span>
+              <h2 class="text-2xl md:text-3xl font-bold mb-4 leading-tight">{featuredEbook.title}</h2>
+              <p class="text-slate-400 text-sm md:text-base leading-relaxed mb-6 max-w-xl">
+                {featuredEbook.description || "Bộ cẩm nang thực chiến chắt lọc toàn bộ tinh hoa tự động hóa và kỹ nghệ tối ưu hóa văn bản dành riêng cho luật gia thời đại công nghệ số."}
+              </p>
+              
+              <div class="flex items-baseline gap-3 mb-6">
+                {featuredEbook.oldPrice > 0 && (
+                  <span class="text-sm text-slate-500 line-through">
+                    {featuredEbook.oldPrice.toLocaleString('vi-VN')}đ
+                  </span>
+                )}
+                <span class="text-2xl font-extrabold text-emerald-400">
+                  {featuredEbook.price.toLocaleString('vi-VN')}đ
+                </span>
+              </div>
+              
+              <a href={`/shop/${featuredEbook.slug}`} class="inline-block bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-8 rounded-xl shadow-lg transition-colors text-center w-full sm:w-auto">
+                📥 Sở hữu ngay bằng mã QR Tự Động
+              </a>
+            </div>
+          </div>
+        </div>
+      </Container>
+    </div>
+  )}
+
 </Layout>
