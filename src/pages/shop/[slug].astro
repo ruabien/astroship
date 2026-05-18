@@ -1,125 +1,179 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Container from '../../components/container.astro';
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/container.astro";
 
 export const prerender = false;
 
 const { slug } = Astro.params;
 
-// Hàm chuẩn hóa chuỗi để so sánh chính xác tuyệt đối
-function sanitizeSlug(text: string) {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Xóa dấu tiếng Việt phát sinh nếu có
-    .replace(/[^a-z0-9-]/g, '')     // Chỉ giữ lại chữ, số và dấu gạch ngang
-    .trim();
-}
-
-const currentSlug = sanitizeSlug(slug || "");
-
-let title = "";
-let price = 0;
-let description = "";
-let image = "";
-let hasError = false;
+// 1. LOGIC LẤY DỮ LIỆU SẢN PHẨM
+let product: any = null;
+let Content: any = null;
 
 try {
-  // Quét toàn bộ file trong thư mục ebooks
-  const posts = import.meta.glob('/src/content/ebooks/*.md', { eager: true });
-  let matchedFile: any = null;
-
-  // Vòng lặp duyệt qua từng file để tìm kiếm linh hoạt, tránh lỗi lệch ký tự ẩn
-  for (const path in posts) {
-    const fileSlug = path.split('/').pop()?.replace('.md', '') || "";
-    if (sanitizeSlug(fileSlug) === currentSlug) {
-      matchedFile = posts[path];
-      break;
-    }
-  }
-
-  if (matchedFile) {
-    title = matchedFile.frontmatter.title || "Ebook";
-    price = matchedFile.frontmatter.price || 0;
-    description = matchedFile.frontmatter.description || "";
-    image = matchedFile.frontmatter.image || "";
-  } else {
-    hasError = true;
+  const ebooks = import.meta.glob('/src/content/ebooks/*.md', { eager: true });
+  const matchedPath = Object.keys(ebooks).find(path => path.endsWith(`${slug}.md`));
+  
+  if (matchedPath) {
+    const file: any = ebooks[matchedPath];
+    product = file.frontmatter;
+    Content = file.Content;
   }
 } catch (e) {
-  hasError = true;
+  console.error("Lỗi tải sản phẩm:", e);
 }
 
-if (hasError) {
-  return Astro.redirect('/404');
+if (!product) {
+  return Astro.redirect("/404");
 }
+
+// Hàm định dạng tiền VNĐ
+const formatMoney = (amount: number) => {
+  return new Intl.NumberFormat('vi-VN').format(amount) + "đ";
+};
+
+// Tính % giảm giá nếu có giá cũ
+const discountPercent = product.oldPrice 
+  ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) 
+  : 0;
 ---
 
-<Layout title={title}>
+<Layout title={`${product.title} - HoTro.Online`}>
   <Container>
-    <div class="max-w-4xl mx-auto my-10 grid md:grid-cols-2 gap-8 items-center">
-      <div>
-        {image && <img src={image} alt={title} class="w-full rounded-lg shadow-xl border" />}
+    <div class="mt-8 mb-12">
+      {/* Breadcrumb - Điều hướng nhỏ */}
+      <nav class="flex text-slate-400 text-xs mb-8 uppercase tracking-widest">
+        <a href="/" class="hover:text-blue-600 transition">Trang chủ</a>
+        <span class="mx-2">/</span>
+        <a href="/shop" class="hover:text-blue-600 transition">Thư viện</a>
+        <span class="mx-2">/</span>
+        <span class="text-slate-600">{product.title}</span>
+      </nav>
+
+      <div class="grid lg:grid-cols-12 gap-12 items-start">
+        {/* CỘT TRÁI: HÌNH ẢNH SẢN PHẨM (Chiếm 5 phần) */}
+        <div class="lg:col-span-5 sticky top-24">
+          <div class="bg-slate-50 border border-slate-100 rounded-3xl p-8 shadow-inner overflow-hidden flex justify-center">
+            {product.image ? (
+              <img 
+                src={product.image} 
+                alt={product.title} 
+                class="w-full max-w-[320px] h-auto shadow-2xl rounded-lg transform hover:scale-105 transition-transform duration-500"
+              />
+            ) : (
+              <div class="aspect-[3/4] w-full bg-slate-200 animate-pulse rounded-lg flex items-center justify-center">
+                Ảnh đang cập nhật...
+              </div>
+            )}
+          </div>
+          
+          {/* Badge cam kết dưới ảnh */}
+          <div class="mt-6 grid grid-cols-2 gap-4">
+            <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-xl text-[11px] font-bold text-blue-700">
+              <span>✅</span> NHẬN FILE NGAY
+            </div>
+            <div class="flex items-center gap-2 p-3 bg-emerald-50 rounded-xl text-[11px] font-bold text-emerald-700">
+              <span>🔒</span> BẢO MẬT THANH TOÁN
+            </div>
+          </div>
+        </div>
+
+        {/* CỘT PHẢI: THÔNG TIN VÀ NÚT CHỐT ĐƠN (Chiếm 7 phần) */}
+        <div class="lg:col-span-7">
+          <div class="mb-4">
+            <span class="px-3 py-1 bg-indigo-600 text-white text-[10px] font-bold rounded-full uppercase tracking-tighter">
+              Bản quyền độc quyền HoTro.Online
+            </span>
+          </div>
+          
+          <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight mb-4">
+            {product.title}
+          </h1>
+
+          <div class="flex items-center gap-4 mb-6">
+            <div class="text-3xl font-black text-blue-600">
+              {formatMoney(product.price)}
+            </div>
+            {product.oldPrice > 0 && (
+              <div class="text-lg text-slate-400 line-through">
+                {formatMoney(product.oldPrice)}
+              </div>
+            )}
+            {discountPercent > 0 && (
+              <div class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
+                GIẢM {discountPercent}%
+              </div>
+            )}
+          </div>
+
+          <div class="p-6 bg-slate-50 border border-slate-100 rounded-2xl mb-8">
+            <h3 class="font-bold text-slate-800 mb-2">Mô tả ngắn:</h3>
+            <p class="text-slate-600 leading-relaxed italic">
+              {product.description}
+            </p>
+          </div>
+
+          {/* CÁC ĐIỂM NỔI BẬT (Bullet Points) */}
+          <div class="space-y-4 mb-10">
+            <div class="flex items-start gap-3">
+              <div class="mt-1 bg-emerald-100 p-1 rounded-full text-emerald-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p class="text-slate-700 font-medium text-sm">Hệ thống hóa tư duy thực chiến của Kiểm sát viên v4.</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="mt-1 bg-emerald-100 p-1 rounded-full text-emerald-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p class="text-slate-700 font-medium text-sm">Bộ mẫu Prompt rà soát chứng cứ và tóm tắt án chuẩn 100%.</p>
+            </div>
+          </div>
+
+          {/* NÚT THANH TOÁN QR TỰ ĐỘNG */}
+          <div class="bg-white border-2 border-blue-600 p-2 rounded-2xl shadow-lg">
+            <a 
+              href={`https://hotro.online/payment?id=${slug}&amount=${product.price}`}
+              class="flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-5 px-8 rounded-xl transition-all text-xl"
+            >
+              <span>📥</span> SỞ HỮU NGAY QUA MÃ QR
+            </a>
+          </div>
+          <p class="text-center text-[11px] text-slate-400 mt-4">
+            * Sau khi quét mã thành công, hệ thống sẽ tự động gửi file về Zalo/Email của bạn.
+          </p>
+        </div>
       </div>
-      
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
-        <p class="text-2xl font-extrabold text-blue-600 mb-4">{price.toLocaleString('vi-VN')} VNĐ</p>
-        <div class="text-gray-600 mb-6 border-b pb-6">{description}</div>
+
+      {/* PHẦN NỘI DUNG CHI TIẾT (MARKDOWN) */}
+      <div class="mt-20 max-w-4xl mx-auto border-t border-slate-100 pt-16">
+        <div class="flex justify-center mb-12">
+            <h2 class="text-2xl font-bold text-slate-900 border-b-4 border-blue-600 pb-2 inline-block">
+                CHI TIẾT NỘI DUNG
+            </h2>
+        </div>
         
-        <button 
-          id="btn-payos-buy" 
-          data-price={price} 
-          data-title={title}
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-200 cursor-pointer text-center"
-        >
-          Mua Ngay Với Mã QR
-        </button>
+        {/* Render Markdown với class prose để đẹp mắt */}
+        <div class="prose prose-slate lg:prose-lg max-w-none 
+          prose-headings:text-slate-900 prose-headings:font-bold 
+          prose-p:text-slate-600 prose-p:leading-relaxed
+          prose-li:text-slate-600 prose-img:rounded-2xl prose-img:shadow-lg">
+          {Content ? <Content /> : <p class="text-center italic text-slate-400">Nội dung đang được cập nhật...</p>}
+        </div>
       </div>
     </div>
   </Container>
 </Layout>
 
-<script>
-  // Sử dụng JS thuần hoàn toàn để Astro không bao giờ bị lỗi biên dịch trang trắng
-  const buyButton = document.getElementById('btn-payos-buy');
-  
-  if (buyButton) {
-    buyButton.addEventListener('click', async () => {
-      const originalText = buyButton.innerText;
-      buyButton.innerText = "Đang khởi tạo mã QR...";
-      buyButton.setAttribute('disabled', 'true');
-      
-      const price = buyButton.getAttribute('data-price');
-      const title = buyButton.getAttribute('data-title');
-
-      try {
-        const response = await fetch('/api/create-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ price: Number(price), title })
-        });
-        
-        const data = await response.json();
-        
-        // Bốc tách link quét mã QR từ mọi cấu trúc dữ liệu trả về
-        const checkoutUrl = data.checkoutUrl || (data.data && data.data.checkoutUrl);
-
-        if (checkoutUrl) {
-          // Điều hướng ngay lập tức sang cổng PayOS
-          window.location.href = checkoutUrl;
-        } else {
-          // Xuất lỗi thật ra màn hình nếu có để dễ theo dõi
-          const errorMsg = data.error || data.message || 'Không lấy được link từ hệ thống';
-          alert('Lỗi hệ thống: ' + errorMsg);
-          buyButton.innerText = originalText; 
-          buyButton.removeAttribute('disabled');
-        }
-      } catch (err) {
-        alert('Lỗi kết nối máy chủ Cloudflare!');
-        buyButton.innerText = originalText;
-        buyButton.removeAttribute('disabled');
-      }
-    });
-  }
-</script>
+<style is:global>
+  /* Fix lỗi hiển thị Content Markdown khi chưa có plugin Typography */
+  .prose h1, .prose h2, .prose h3 { margin-top: 1.5em; margin-bottom: 0.5em; color: #1e293b; font-weight: 700; }
+  .prose h2 { font-size: 1.5rem; }
+  .prose p { margin-bottom: 1.25em; line-height: 1.7; }
+  .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.25em; }
+  .prose li { margin-bottom: 0.5em; }
+  .prose img { max-width: 100%; height: auto; border-radius: 1rem; margin: 2rem 0; }
+</style>
