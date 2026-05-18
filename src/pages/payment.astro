@@ -1,0 +1,130 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/container.astro";
+
+export const prerender = false;
+
+// 1. LẤY CÁC THAM SỐ TỪ URL (Slug sản phẩm và số tiền)
+const url = new URL(Astro.request.url);
+const productSlug = url.searchParams.get("id") || "";
+const amount = url.searchParams.get("amount") || "0";
+
+// 2. KHỞI TẠO ĐƯỜNG DẪN NHÚNG THANH TOÁN (PAYOS IFRAME)
+// Thay vì chuyển hướng, ta sẽ truyền link thanh toán nhúng qua iframe.
+// Lưu ý: Đoạn logic backend tạo link thanh toán của bạn cần trả về link thanh toán chuẩn của PayOS.
+// Ở đây chúng ta cấu trúc giao diện để hứng và hiển thị link đó trực tiếp.
+let checkoutUrl = "";
+if (productSlug) {
+  // GIẢ THUYẾT: Cổng webhook/worker của bạn sinh ra link thanh toán hoặc bạn tích hợp trực tiếp link nhúng
+  // Để tối ưu trải nghiệm, ta sẽ giả định bạn truyền thẳng checkoutUrl từ trang chi tiết hoặc qua hàm gọi API.
+  checkoutUrl = url.searchParams.get("checkoutUrl") || `https://checkout.payos.vn/web/${productSlug}`; 
+}
+
+const formatMoney = (amt: string) => {
+  return new Intl.NumberFormat('vi-VN').format(parseInt(amt)) + "đ";
+};
+---
+
+<Layout title="Thanh Toán An Toàn - HoTro.Online">
+  <Container>
+    <div class="mt-8 mb-16 max-w-5xl mx-auto">
+      
+      {/* Tiến trình thanh toán (Progress Bar) */}
+      <div class="flex items-center justify-center gap-4 mb-10 text-xs font-bold uppercase tracking-wider text-slate-400">
+        <span class="text-blue-600">1. Chọn sản phẩm</span>
+        <span class="text-blue-600">➔</span>
+        <span class="text-blue-600 border-b-2 border-blue-600 pb-1">2. Thanh toán QR</span>
+        <span>➔</span>
+        <span>3. Nhận file tự động</span>
+      </div>
+
+      <div class="grid md:grid-cols-12 gap-8 items-start">
+        
+        {/* CỘT TRÁI: KHUNG QUÉT MÃ QR NHÚNG TRỰC TIẾP (Chiếm 7 phần) */}
+        <div class="md:col-span-7 bg-white border-2 border-slate-100 rounded-3xl shadow-xl overflow-hidden flex flex-col">
+          <div class="bg-slate-900 p-4 text-white flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="animate-pulse flex h-2 w-2 rounded-full bg-emerald-400"></span>
+              <span class="text-xs font-bold uppercase tracking-wide">Cổng thanh toán bảo mật PayOS</span>
+            </div>
+            <span class="text-slate-400 text-xs">Mã hóa SSL 256-bit</span>
+          </div>
+
+          {/* IFRAME NHÚNG TRỰC TIẾP PAYOS - KHÔNG RỜI KHỎI WEB */}
+          <div class="w-full bg-slate-50 relative flex items-center justify-center min-h-[550px]">
+            {checkoutUrl ? (
+              <iframe 
+                src={checkoutUrl} 
+                class="absolute inset-0 w-full h-full border-none"
+                allow="payment"
+                title="Cổng thanh toán HoTro.Online"
+              ></iframe>
+            ) : (
+              <div class="p-8 text-center text-slate-500">
+                <span class="text-4xl block mb-2">🔄</span>
+                <p class="font-medium">Đang khởi tạo mã QR thanh toán an toàn...</p>
+                <p class="text-xs text-slate-400 mt-1">Vui lòng đợi trong giây lát</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* CỘT PHẢI: HƯỚNG DẪN & CAM KẾT BẢO MẬT (Chiếm 5 phần) */}
+        <div class="md:col-span-5 space-y-6">
+          
+          {/* Hộp thông tin đơn hàng */}
+          <div class="bg-slate-50 border border-slate-100 p-6 rounded-2xl">
+            <h3 class="font-bold text-slate-900 text-base mb-4 pb-2 border-b border-slate-200">Tóm tắt đơn hàng</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between gap-4">
+                <span class="text-slate-500">Sản phẩm:</span>
+                <span class="font-bold text-slate-800 text-right uppercase tracking-tight">{productSlug.replace(/-/g, ' ')}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">Hình thức:</span>
+                <span class="text-emerald-600 font-semibold">Tải file PDF Online</span>
+              </div>
+              <div class="border-t border-dashed pt-3 mt-3 flex justify-between items-baseline">
+                <span class="font-bold text-slate-900">Tổng thanh toán:</span>
+                <span class="text-2xl font-black text-blue-600">{formatMoney(amount)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quy trình xử lý tự động */}
+          <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+            <h4 class="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
+              ⚡ Hướng dẫn nhận file siêu tốc:
+            </h4>
+            <ol class="space-y-3 text-xs text-slate-600 list-decimal pl-4">
+              <li>Mở ứng dụng Ngân hàng hoặc Ví điện tử (Momo, Viettel Money...) trên điện thoại.</li>
+              <li>Bật tính năng **Quét mã QR** và quét mã hiển thị trên màn hình.</li>
+              <li>Giữ nguyên số tiền và nội dung chuyển khoản được tạo tự động (Không tự ý sửa đổi).</li>
+              <li>Hệ thống AI sẽ xác thực giao dịch trong **30 giây** và tự động gửi link tải file trực tiếp về màn hình này hoặc Email/Zalo của bạn.</li>
+            </ol>
+          </div>
+
+          {/* Khối cam kết tăng Trust */}
+          <div class="p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl flex items-start gap-3">
+            <span class="text-xl">🛡️</span>
+            <div>
+              <h5 class="text-xs font-bold text-slate-900 uppercase tracking-tight mb-1">Quyền lợi độc quyền:</h5>
+              <p class="text-[11px] text-slate-500 leading-relaxed">
+                Tài liệu được cập nhật vĩnh viễn phiên bản mới hoàn toàn miễn phí. Hỗ trợ kỹ thuật 24/7 trực tiếp bởi Kiểm sát viên quản trị hệ thống nếu có bất kỳ sự cố tải file nào xảy ra.
+              </p>
+            </div>
+          </div>
+
+          {/* Nút quay lại nếu khách đổi ý */}
+          <div class="text-center">
+            <a href="/shop" class="text-xs text-slate-400 hover:text-blue-600 transition underline">
+              ← Quay lại Thư viện và chọn sản phẩm khác
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </Container>
+</Layout>
