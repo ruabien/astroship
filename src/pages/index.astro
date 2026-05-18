@@ -20,7 +20,6 @@ try {
     };
   });
   
-  // Sắp xếp bài mới nhất lên đầu và lấy đúng 3 bài
   latestPosts = allPosts
     .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime())
     .slice(0, 3);
@@ -28,13 +27,12 @@ try {
   console.error("Lỗi lấy bài viết trang chủ:", e);
 }
 
-// 2. TỰ ĐỘNG BỐC CUỐN SÁCH EBOOK ĐỂ HIỂN THỊ NỔI BẬT
+// 2. ĐÃ SỬA LỖI: TỰ ĐỘNG BỐC CUỐN SÁCH EBOOK ĐỂ HIỂN THỊ NỔI BẬT
 let featuredEbook: any = null;
 try {
   const ebooks = import.meta.glob('/src/content/ebooks/*.md', { eager: true });
   const allEbooks = Object.keys(ebooks).map(path => {
-    const file: any = posts[path]; // Sửa logic quét ebook
-    const fileEbook: any = ebooks[path];
+    const fileEbook: any = ebooks[path]; // Đã sửa: Trỏ chính xác vào fileEbook sạch
     return {
       slug: path.split('/').pop()?.replace('.md', '') || "",
       title: fileEbook.frontmatter.title || "Ebook Công Nghệ",
@@ -44,8 +42,12 @@ try {
       description: fileEbook.frontmatter.description || ""
     };
   });
-  featuredEbook = allEbooks[0] || null; // Lấy cuốn sách đầu tiên làm sản phẩm đinh
-} catch (e) {}
+  
+  // Lấy cuốn sách đầu tiên có trong thư mục src/content/ebooks
+  featuredEbook = allEbooks[0] || null; 
+} catch (e) {
+  console.error("Lỗi lấy ebook trang chủ:", e);
+}
 
 // Hàm hỗ trợ hiển thị tên Danh mục có dấu ngoài giao diện
 const getCategoryLabel = (cat: string) => {
